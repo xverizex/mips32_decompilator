@@ -51,7 +51,16 @@ static unsigned int get_info_op ( unsigned int op, int start, int end ) {
 
 static int get_index_op_first ( const int first ) {
 	for ( int i = 0; i < mips32_ops_count; i++ ) {
-		if ( mips32_op[i].special == first ) return i;
+		if ( mips32_op[i].check == FIRST )
+			if ( mips32_op[i].special == first ) return i;
+	}
+	return -1;
+}
+
+static int get_index_op_last ( const int last ) {
+	for ( int i = 0; i < mips32_ops_count; i++ ) {
+		if ( mips32_op[i].check == BOTH || mips32_op[i].check == LAST )
+			if ( mips32_op[i].special == last ) return i;
 	}
 	return -1;
 }
@@ -71,6 +80,18 @@ static void scheme ( const int index, const int op ) {
 			}
 			break;
 		case 2: {
+				unsigned int special = get_info_op ( op, 26, 31 );
+				unsigned int rs = get_info_op ( op, 21, 25 );
+				unsigned int rt = get_info_op ( op, 16, 20 );
+				unsigned int rd = get_info_op ( op, 11, 15 );
+				unsigned int zero = get_info_op ( op, 6, 10 );
+				unsigned int operate = get_info_op ( op, 0, 5 );
+
+				printf ( "%s %s, %s, %s\n", mips32_op[index].special_cmd,
+						get_name_register ( rd ),
+						get_name_register ( rs ),
+						get_name_register ( rt )
+				       );
 			}
 			break;
 		case 3: {
@@ -107,9 +128,16 @@ static void scheme ( const int index, const int op ) {
 
 static void parse_operation ( const int op ) {
 	int first = get_info_op ( op, 26, 31 );
+	int last = get_info_op ( op, 0, 5 );
 
 	switch ( first ) {
 		case MIPS_SPECIAL_CUSTOM: {
+						  int index = get_index_op_last ( last );
+						  if ( index == -1 ) {
+							  printf ( "not found index\n" );
+							  exit ( EXIT_FAILURE );
+						  }
+						  scheme ( index, op );
 					  }
 					  break;
 		case MIPS_COP1_CUSTOM: {

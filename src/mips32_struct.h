@@ -56,6 +56,7 @@ void mips32_operate_add_s ( struct mips32_registers *mr, unsigned int static_num
 void mips32_operate_addi ( struct mips32_registers *mr, unsigned int static_number );
 void mips32_operate_addiu ( struct mips32_registers *mr, unsigned int static_number );
 void mips32_operate_sw ( struct mips32_registers *mr, unsigned int static_number );
+void mips32_operate_or ( struct mips32_registers *mr, unsigned int static_number );
 
 #define FIRST        0
 #define LAST         1
@@ -69,6 +70,7 @@ void mips32_operate_sw ( struct mips32_registers *mr, unsigned int static_number
 #define MIPS_INS_ADDI_CUSTOM          0x8
 #define MIPS_INS_ADDIU_CUSTOM         0x9
 #define MIPS_INS_SW_CUSTOM            0x2b
+#define MIPS_INS_OR_CUSTOM            0x25
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
@@ -91,7 +93,8 @@ struct mips32_operators {
 	{ MIPS_INS_ADD_FMT_CUSTOM, "add.s", mips32_operate_add_s, 3, 3, BOTH },
 	{ MIPS_INS_ADDI_CUSTOM, "addi", mips32_operate_addi, 3, 4, FIRST },
 	{ MIPS_INS_ADDIU_CUSTOM, "addiu", mips32_operate_addiu, 3, 4, FIRST },
-	{ MIPS_INS_SW_CUSTOM, "sw", mips32_operate_sw, 3, 5, FIRST }
+	{ MIPS_INS_SW_CUSTOM, "sw", mips32_operate_sw, 3, 5, FIRST },
+	{ MIPS_INS_OR_CUSTOM, "or", mips32_operate_or, 3, 2, BOTH }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );

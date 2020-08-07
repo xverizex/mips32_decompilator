@@ -18,3 +18,6 @@ void mips32_operate_addiu ( struct mips32_registers *mr, unsigned int static_num
 
 void mips32_operate_sw ( struct mips32_registers *mr, unsigned int static_number ) {
 }
+
+void mips32_operate_or ( struct mips32_registers *mr, unsigned int static_number ) {
+}
