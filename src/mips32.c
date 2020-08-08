@@ -17,6 +17,8 @@ struct sym {
 	int count;
 } sym;
 
+static void exec_pfaf_n ( int );
+
 int global_engian;
 unsigned int address;
 int global_entry_point;
@@ -24,7 +26,9 @@ unsigned int global_pointer;
 unsigned int global_text_size;
 const char *global_file_buffer;
 unsigned int global_find_offset;
+int global_pfaf_found;
 int switch_pfa;
+int switch_pfaf;
 int global_print;
 
 #define NO_PRINT              1
@@ -41,6 +45,7 @@ static struct mips32_regs {
 #define COLOR_NOP              0x4
 #define COLOR_BE               0x5
 #define COLOR_LOAD_SAVE        0x6
+#define COLOR_FUNCTION         COLOR_BE
 
 char current_buffer[5][255];
 
@@ -81,6 +86,9 @@ static char *colored_num ( const unsigned int p, const int color, int index ) {
 		case COLOR_NUMBER:
 			snprintf ( current_buffer[index], 255, "\033[01;33m0x%x\033[00m", p );
 			return current_buffer[index];
+		case COLOR_BE:
+			snprintf ( current_buffer[index], 255, "\033[01;32m%x\033[00m", p );
+			return current_buffer[index];
 	}
 }
 
@@ -103,34 +111,41 @@ static void print_comment_function ( const unsigned int pp, const unsigned int o
 static void mips32_cpuc_set_register ( unsigned int reg, unsigned int number ) {
 }
 
-void mips32_operate_abs_s ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_abs_s ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_add ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_add ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_add_s ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_add_s ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_addi ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_addi ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_addiu ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, int sec_num ) {
 	cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
+	if ( switch_pfaf ) {
+		if ( mr->rt == MIPS_REG_SP_CUSTOM && mr->rs == MIPS_REG_SP_CUSTOM ) {
+			if ( static_number < 0x8000 ) {
+				exec_pfaf_n ( global_pointer );		
+			}
+		}
+	}
 }
 
-void mips32_operate_sw ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_sw ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_or ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_or ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_lui ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_lui ( struct mips32_registers *mr, short static_number, int sec_num ) {
 	cpuc.r[mr->rt] = 0;
 	cpuc.r[mr->rt] = ( static_number << 16 ) & 0xffff0000;
 }
 
-void mips32_operate_lw ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int sec_num ) {
 	cpuc.r[mr->rt] = cpuc.r[mr->base] + static_number;
 	unsigned int p = cpuc.r[mr->rt] & 0xffff;
 	unsigned int pp = cpuc.r[mr->rt];
@@ -143,25 +158,33 @@ void mips32_operate_lw ( struct mips32_registers *mr, short static_number ) {
 	}
 }
 
-void mips32_operate_slti ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_slti ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_beq ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_beq ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_nop ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_nop ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_jalr ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_jalr ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_jr ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_jr ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
-void mips32_operate_and ( struct mips32_registers *mr, short static_number ) {
+void mips32_operate_and ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+
+void mips32_operate_jal ( struct mips32_registers *mr, short static_number, int sec_num ) {
+	if ( switch_pfa ) {
+		if ( global_find_offset == sec_num ) {
+			printf ( "%s\n", colored_num ( global_pointer, COLOR_ADDRESS, 1 ) );
+		}
+	}
 }
 
 
@@ -265,7 +288,7 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 
 				mr.rs = rs;
 				mr.rt = rt;
-				mips32_op[index].operate ( &mr, immediate < 0x8000 ? immediate : (short) immediate );
+				mips32_op[index].operate ( &mr, immediate < 0x8000 ? immediate : (short) immediate, 0 );
 
 				if ( dialog == PRINT )
 				printf ( "\n" );
@@ -287,7 +310,7 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 
 				mr.base = base;
 				mr.rt = rt;
-				mips32_op[index].operate ( &mr, offset < 0x8000 ? offset : (short) offset );
+				mips32_op[index].operate ( &mr, offset < 0x8000 ? offset : (short) offset, 0 );
 
 				if ( dialog == PRINT )
 				printf ( "\n" );
@@ -306,7 +329,7 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 				       );
 
 				mr.rt = rt;
-				mips32_op[index].operate ( &mr, immediate );
+				mips32_op[index].operate ( &mr, immediate, 0 );
 
 				if ( dialog == PRINT )
 				printf ( "\n" );
@@ -389,6 +412,24 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 				printf ( "\n" );
 			}
 			break;
+		case 12: {
+				 unsigned short operate = get_info_op ( op, 26, 31 );
+				 unsigned int offset = get_info_op ( op, 0, 25 );
+				 offset <<= 2;
+
+				 if ( dialog == PRINT )
+					 printf ( "%s %s", colored_string ( mips32_op[index].special_cmd, COLOR_BE, 1 ),
+							 colored_num ( offset, COLOR_FUNCTION, 2 )
+						);
+				 mips32_op[index].operate ( &mr, 0, offset );
+
+				 if ( dialog == PRINT )
+				 print_comment_function ( global_pointer, offset );
+
+				 if ( dialog == PRINT )
+					 printf ( "\n" );
+			 }
+			 break;
 	}
 }
 
@@ -465,6 +506,7 @@ static int check_is_number ( char *val ) {
 }
 
 static void exec_pd ( char *param ) {
+	global_print = 1;
 	if ( !check_is_number ( param ) ) {
 		printf ( "Должно быть число.\n" );
 		return;
@@ -565,6 +607,22 @@ static void exec_pf ( ) {
 	}
 }
 
+static void exec_pfaf_n ( int num ) {
+	printf ( "%s ", colored_num ( num, COLOR_ADDRESS, 1 ) );
+	int pr = 0;
+
+	for ( int i = 0; i < sym.count; i++ ) {
+		if ( sym.offset[i].name[0] == 0 ) continue;
+		if ( sym.offset[i].addr == num ) {
+			if ( !strncmp ( sym.offset[i].name, "_MIPS_STUBS_", 13 ) ) continue;
+			printf ( "%s\n", colored_string ( sym.offset[i].name, COLOR_FUNCTION, 2 ) );
+			pr = 1;
+			global_pfaf_found = 1;
+			break;
+		}
+	}
+	if ( !pr ) printf ( "\n" );
+}
 static void exec_pfa ( char *param ) {
 	if ( !check_is_hex ( param ) ) {
 		printf ( "Должно быть шестнадцатеричное число.\n" );
@@ -574,7 +632,7 @@ static void exec_pfa ( char *param ) {
 
 	global_find_offset = get_hex_offset ( param );
 
-	for ( int pointer = global_entry_point, i = 0; i < global_text_size; pointer++, i += 4 ) {
+	for ( int pointer = global_entry_point, i = 0; i < global_text_size; i += 4 ) {
 		unsigned int offset = pointer & 0xfffff;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		global_pointer = pointer;
@@ -583,8 +641,34 @@ static void exec_pfa ( char *param ) {
 		parse_operation ( *operation, pointer, NO_PRINT );
 		switch_pfa = 0;
 		global_print = 1;
-		pointer += 3;
+		pointer += 4;
 	}
+}
+
+static void exec_pfaf ( char *param ) {
+	if ( !check_is_hex ( param ) ) {
+		printf ( "Должно быть шестнадцатеричное число.\n" );
+		return;
+	}
+	if ( param[0] == '0' && param[1] == 'x' ) param += 2;
+
+	global_find_offset = get_hex_offset ( param );
+
+	for ( int pointer = global_find_offset, i = 0; pointer > global_entry_point; i += 4 ) {
+		unsigned int offset = pointer & 0xfffff;
+		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
+		global_pointer = pointer;
+		switch_pfaf = 1;
+		global_print = 0;
+		parse_operation ( *operation, pointer, NO_PRINT );
+		switch_pfaf = 0;
+		global_print = 1;
+		pointer -= 4;
+		if ( global_pfaf_found ) {
+			break;
+		}
+	}
+	global_pfaf_found = 0;
 }
 
 static void parse_buf ( char *b ) {
@@ -622,15 +706,23 @@ static void parse_buf ( char *b ) {
 
 	if ( !strncmp ( cmd, "pd", 3 ) ) {
 		exec_pd ( param );
+		return;
 	}
 	if ( !strncmp ( cmd, "s", 2 ) ) {
 		exec_s ( param );
+		return;
 	}
 	if ( !strncmp ( cmd, "pf", 3 ) ) {
 		exec_pf ( );
+		return;
 	}
 	if ( !strncmp ( cmd, "pfa", 4 ) ) {
 		exec_pfa ( param );
+		return;
+	}
+	if ( !strncmp ( cmd, "pfaf", 5 ) ) {
+		exec_pfaf ( param );
+		return;
 	}
 }
 

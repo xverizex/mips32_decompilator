@@ -79,25 +79,30 @@
  * 	25-21 rs
  * 	20-16 operate
  * 	15-0  offset
+ *
+ * 12.
+ * 	31-26 operate
+ * 	25-0  instr_index
  */
 #include "mips32_registers.h"
 
-void mips32_operate_add ( struct mips32_registers *mr, short static_number );
-void mips32_operate_abs_s ( struct mips32_registers *mr, short static_number );
-void mips32_operate_add_s ( struct mips32_registers *mr, short static_number );
-void mips32_operate_addi ( struct mips32_registers *mr, short static_number );
-void mips32_operate_addiu ( struct mips32_registers *mr, short static_number );
-void mips32_operate_sw ( struct mips32_registers *mr, short static_number );
-void mips32_operate_or ( struct mips32_registers *mr, short static_number );
-void mips32_operate_lui ( struct mips32_registers *mr, short static_number );
-void mips32_operate_lw ( struct mips32_registers *mr, short static_number );
-void mips32_operate_slti ( struct mips32_registers *mr, short static_number );
-void mips32_operate_beq ( struct mips32_registers *mr, short static_number );
-void mips32_operate_nop ( struct mips32_registers *mr, short static_number );
-void mips32_operate_jalr ( struct mips32_registers *mr, short static_number );
-void mips32_operate_jr ( struct mips32_registers *mr, short static_number );
-void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number );
-void mips32_operate_and ( struct mips32_registers *mr, short static_number );
+void mips32_operate_add ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_abs_s ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_add_s ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_addi ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sw ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_or ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lui ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_slti ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_beq ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_nop ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_jalr ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_jr ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_and ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_jal ( struct mips32_registers *mr, short static_number, int );
 
 #define FIRST        0
 #define LAST         1
@@ -124,6 +129,7 @@ void mips32_operate_and ( struct mips32_registers *mr, short static_number );
 #define MIPS_INS_BAL_CUSTOM           0x1
 #define MIPS_INS_BGEZAL_CUSTOM        0x11
 #define MIPS_INS_AND_CUSTOM           0x24
+#define MIPS_INS_JAL_CUSTOM           0x3
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
@@ -136,7 +142,7 @@ struct mips32_operators {
 	unsigned int o;
 	unsigned int special;
 	char special_cmd[255];
-	void (*operate) ( struct mips32_registers * mr, short static_number );
+	void (*operate) ( struct mips32_registers * mr, short static_number, int second_number );
 	unsigned int count;
 	unsigned int scheme;
 	unsigned int check;
@@ -157,7 +163,8 @@ struct mips32_operators {
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_JALR_CUSTOM, "jalr", mips32_operate_jalr, 1, 9, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_JR_CUSTOM, "jr", mips32_operate_jr, 1, 10, BOTH },
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZAL_CUSTOM, "bgezal", mips32_operate_bgezal, 2, 11, BOTH },
-	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_AND_CUSTOM, "and", mips32_operate_and, 3, 2, BOTH }
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_AND_CUSTOM, "and", mips32_operate_and, 3, 2, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_JAL_CUSTOM, "jal", mips32_operate_jal, 1, 12, FIRST }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
