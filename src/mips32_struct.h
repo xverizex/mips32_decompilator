@@ -38,6 +38,12 @@
  * 	25-21 base
  * 	20-16 rt
  * 	15-0  offset
+ *
+ * 6.
+ * 	31-26 operate
+ * 	25-21 zero
+ * 	20-16 rt
+ * 	15-0  immediate
  * 	
  */
 
@@ -57,6 +63,8 @@ void mips32_operate_addi ( struct mips32_registers *mr, unsigned int static_numb
 void mips32_operate_addiu ( struct mips32_registers *mr, unsigned int static_number );
 void mips32_operate_sw ( struct mips32_registers *mr, unsigned int static_number );
 void mips32_operate_or ( struct mips32_registers *mr, unsigned int static_number );
+void mips32_operate_lui ( struct mips32_registers *mr, unsigned int static_number );
+void mips32_operate_lw ( struct mips32_registers *mr, unsigned int static_number );
 
 #define FIRST        0
 #define LAST         1
@@ -71,6 +79,8 @@ void mips32_operate_or ( struct mips32_registers *mr, unsigned int static_number
 #define MIPS_INS_ADDIU_CUSTOM         0x9
 #define MIPS_INS_SW_CUSTOM            0x2b
 #define MIPS_INS_OR_CUSTOM            0x25
+#define MIPS_INS_LUI_CUSTOM           0xf
+#define MIPS_INS_LW_CUSTOM            0x23
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
@@ -94,7 +104,9 @@ struct mips32_operators {
 	{ MIPS_INS_ADDI_CUSTOM, "addi", mips32_operate_addi, 3, 4, FIRST },
 	{ MIPS_INS_ADDIU_CUSTOM, "addiu", mips32_operate_addiu, 3, 4, FIRST },
 	{ MIPS_INS_SW_CUSTOM, "sw", mips32_operate_sw, 3, 5, FIRST },
-	{ MIPS_INS_OR_CUSTOM, "or", mips32_operate_or, 3, 2, BOTH }
+	{ MIPS_INS_OR_CUSTOM, "or", mips32_operate_or, 3, 2, BOTH },
+	{ MIPS_INS_LUI_CUSTOM, "lui", mips32_operate_lui, 2, 6, FIRST },
+	{ MIPS_INS_LW_CUSTOM, "lw", mips32_operate_lw, 3, 5, FIRST }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
@@ -130,8 +142,7 @@ int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators )
 #define MIPS_REG_GP_CUSTOM          28
 #define MIPS_REG_SP_CUSTOM          29
 #define MIPS_REG_FP_CUSTOM          30
-#define MIPS_REG_S8_CUSTOM          31
-#define MIPS_REG_RA_CUSTOM          32
+#define MIPS_REG_RA_CUSTOM          31
 
 struct mips32_cpu {
 	unsigned int r;
@@ -168,7 +179,6 @@ struct mips32_cpu {
 	{ MIPS_REG_GP_CUSTOM, "$gp" },
 	{ MIPS_REG_SP_CUSTOM, "$sp" },
 	{ MIPS_REG_FP_CUSTOM, "$fp" },
-	{ MIPS_REG_S8_CUSTOM, "$s8" },
 	{ MIPS_REG_RA_CUSTOM, "$ra" }
 };
 

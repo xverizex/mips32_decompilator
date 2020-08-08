@@ -117,9 +117,21 @@ static void scheme ( const int index, const int op ) {
 				unsigned int offset = get_info_op ( op, 0, 15 );
 
 				printf ( "%s %s, 0x%x(%s)\n", mips32_op[index].special_cmd,
-						get_name_register ( base ),
+						get_name_register ( rt ),
 						offset,
-						get_name_register ( rt )
+						get_name_register ( base )
+				       );
+			}
+			break;
+		case 6: {
+				unsigned int operate = get_info_op ( op, 26, 31 );
+				unsigned int zero = get_info_op ( op, 21, 25 );
+				unsigned int rt = get_info_op ( op, 16, 20 );
+				unsigned int immediate = get_info_op ( op, 0, 15 );
+
+				printf ( "%s %s, 0x%x\n", mips32_op[index].special_cmd,
+						get_name_register ( rt ),
+						immediate
 				       );
 			}
 			break;
