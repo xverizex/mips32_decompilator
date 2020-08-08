@@ -76,6 +76,19 @@ static void print_info_program ( const int machine, const int type, const int en
 	print_bits ( bits );
 }
 
+int global_engian = 0;
+
+static int xchange ( int val ) {
+	if ( global_engian == ELFDATA2MSB ) {
+		int high = ( val >> 8 ) & 0xff;
+		int low = val & 0xff;
+		int number = ( low << 8 ) | ( high & 0xff );
+		return number;
+	} else {
+		return val;
+	}
+}
+
 static void controller_allocation ( 
 		const Elf32_Ehdr * const program_header, 
 		const char * const program_buffer,
@@ -99,6 +112,12 @@ switch_cmd:
 		case 0:
 			mips32_exec ( program_header, program_buffer, BIG_ENGIAN, out_file );
 			break;
+		case 1:
+			mips32_exec ( program_header, program_buffer, LITTLE_ENGIAN, out_file );
+			break;
+		default:
+			mips32_exec ( program_header, program_buffer, BIG_ENGIAN, out_file );
+			break;
 
 	}
 }
@@ -109,9 +128,13 @@ void controller_analisys_and_decompile ( const char * const program_buffer, cons
 
 	check_elf_mag_and_exit_if_fail ( program_header );
 
-	const int machine = get_elf_machine ( program_header );
-	const int type = get_elf_type ( program_header );
-	const int version = get_elf_version ( program_header );
+	int machine = get_elf_machine ( program_header );
+	int type = get_elf_type ( program_header );
+	int version = get_elf_version ( program_header );
+	global_engian = program_header->e_ident[EI_DATA];
+	machine = xchange ( machine );
+	type = xchange ( type );
+	version = xchange ( version );
 
 	switch ( machine ) {
 		case EM_MIPS:

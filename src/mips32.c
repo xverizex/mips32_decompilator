@@ -30,6 +30,7 @@ int global_pfaf_found;
 int switch_pfa;
 int switch_pfaf;
 int global_print;
+extern int global_engian;
 
 #define NO_PRINT              1
 #define PRINT                 0
@@ -739,6 +740,21 @@ static void decompile ( const char * const program_buffer, const int size_of_sec
 
 }
 
+static int xchange ( int num ) {
+	if ( global_engian == ELFDATA2MSB ) {
+		return ((num>>24)&0xff) | ((num<<8)&0xff0000) | ((num>>8)&0xff00) | ((num<<24)&0xff000000);
+	} else {
+		return num;
+	}
+}
+static short change ( short num ) {
+	if ( global_engian == ELFDATA2MSB ) {
+		return ( ( num >> 8 ) | ( num << 8 ) );
+	} else {
+		return num;
+	}
+}
+
 void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const program_buffer, const int engian, const char * const out_file ) {
 	stack = calloc ( 0, sizeof ( char ** ) );
 	sym.count = 0;
@@ -748,12 +764,10 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 		exit ( EXIT_FAILURE );
 	}
 
-	global_engian = engian;
+	Elf32_Shdr *section_header = ( Elf32_Shdr * ) &program_buffer[xchange ( program_header->e_shoff ) ];
 
-	Elf32_Shdr *section_header = ( Elf32_Shdr * ) &program_buffer[program_header->e_shoff];
-
-	const int sections_header_count = program_header->e_shnum;
-	Elf32_Shdr *section_string_table = ( Elf32_Shdr * ) &section_header[program_header->e_shstrndx];
+	const short sections_header_count = change ( program_header->e_shnum );
+	Elf32_Shdr *section_string_table = ( Elf32_Shdr * ) &section_header[ change ( program_header->e_shstrndx ) ];
 	Elf32_Shdr *section_sym = NULL;
 	Elf32_Shdr *section_code = NULL;
 	int size_of_section_code = 0;
@@ -762,27 +776,38 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 	Elf32_Shdr *str_table = NULL;
 
 	for ( int i = 0; i < sections_header_count; i++ ) {
-		const char *name = program_buffer + section_string_table->sh_offset + section_header->sh_name;
-		if ( section_header->sh_type == SHT_SYMTAB ) {
+		const char *name = program_buffer + xchange ( section_string_table->sh_offset ) + xchange ( section_header->sh_name );
+#if 0
+		if ( xchange ( section_header->sh_type ) == SHT_SYMTAB ) {
 			section_sym = section_header;
+			printf ( "symtab:\n" );
 		}
+#endif
 		if ( !strncmp ( name, ".text", 6 ) ) {
 			section_code = section_header;
-			size_of_section_code = section_code->sh_size;
+			size_of_section_code = xchange ( section_code->sh_size );
 		}
+#if 0
 		if ( !strncmp ( name, ".strtab", 8 ) ) {
 			str_table = section_header;
 		}
-		//printf ( "%d: sh_name: %x %s\n", i, section_header->sh_offset, name );
+#endif
+		if ( !strncmp ( name, ".dynsym", 8 ) ) {
+			section_sym = section_header;
+		}
+		if ( !strncmp ( name, ".dynstr", 8 ) ) {
+			str_table = section_header;
+		}
+		//printf ( "%d: sh_name: %x %s\n", i, xchange ( section_header->sh_offset ), name );
 		section_header++;
 	}
 	printf ( "\n" );
 
-	section_sym_tab = ( Elf32_Sym * ) ( program_buffer + section_sym->sh_offset );
-	const int count = section_sym->sh_size / sizeof ( Elf32_Sym );
+	section_sym_tab = ( Elf32_Sym * ) ( program_buffer + xchange ( section_sym->sh_offset ) );
+	const int count = xchange ( section_sym->sh_size ) / sizeof ( Elf32_Sym );
 	for ( int i = 0; i < count; i++ ) {
 		int ty = ELF32_ST_TYPE(section_sym_tab->st_info);
-		const char *name = program_buffer + str_table->sh_offset + section_sym_tab->st_name;
+		const char *name = program_buffer + xchange ( str_table->sh_offset ) + xchange ( section_sym_tab->st_name );
 		switch ( ty ) {
 			case STT_SECTION:
 			case STT_OBJECT:
@@ -799,7 +824,7 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 						       exit ( EXIT_FAILURE );
 					       }
 					       strncpy ( sym.offset[index].name, name, strlen ( name ) );
-					       sym.offset[index].addr = section_sym_tab->st_value;
+					       sym.offset[index].addr = xchange ( section_sym_tab->st_value );
 					       sym.offset[index].type = ty;
 				       }
 				break;
@@ -816,9 +841,9 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 		address = get_offset_by_name ( ".text" );
 	}
 #endif
-	address = section_code->sh_addr;
+	address = xchange ( section_code->sh_addr );
 	global_entry_point = address;
-	global_text_size = section_code->sh_size;
+	global_text_size = xchange ( section_code->sh_size );
 
 	decompile ( program_buffer, size_of_section_code );
 }
