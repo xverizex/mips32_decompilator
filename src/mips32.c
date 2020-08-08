@@ -57,10 +57,10 @@ static int get_index_op_first ( const int first ) {
 	return -1;
 }
 
-static int get_index_op_last ( const int last ) {
+static int get_index_op_last ( const int last, unsigned int o ) {
 	for ( int i = 0; i < mips32_ops_count; i++ ) {
 		if ( mips32_op[i].check == BOTH || mips32_op[i].check == LAST )
-			if ( mips32_op[i].special == last ) return i;
+			if ( mips32_op[i].special == last && mips32_op[i].o == o ) return i;
 	}
 	return -1;
 }
@@ -74,7 +74,9 @@ static char *get_name_register ( const unsigned int reg ) {
 	return NULL;
 }
 
-static void scheme ( const int index, const int op ) {
+static void scheme ( const int index, const int op, const unsigned int pointer ) {
+	struct mips32_registers mr;
+
 	switch ( mips32_op[index].scheme ) {
 		case 1: {
 			}
@@ -101,55 +103,88 @@ static void scheme ( const int index, const int op ) {
 				unsigned int operate = get_info_op ( op, 26, 31 );
 				unsigned int rs = get_info_op ( op, 21, 25 );
 				unsigned int rt = get_info_op ( op, 16, 20 );
-				unsigned int immediate = get_info_op ( op, 0, 15 );
+				unsigned short immediate = get_info_op ( op, 0, 15 );
 
-				printf ( "%s %s, %s, -0x%x\n", mips32_op[index].special_cmd,
-						get_name_register ( rs ),
+				printf ( "%s %s, %s, %c0x%x\n", mips32_op[index].special_cmd,
 						get_name_register ( rt ),
-						0x10000 - immediate
+						get_name_register ( rs ),
+						immediate < 0x0 ? 0 : '-',
+						immediate < 0x8000 ? (unsigned short) immediate : (short) ( 0x0 - immediate & 0xffff )
 				       );
+
+				mr.rs = rs;
+				mr.rt = rt;
+				mips32_op[index].operate ( &mr, immediate < 0x8000 ? immediate : (short) immediate );
 			}
 			break;
 		case 5: {
 				unsigned int operate = get_info_op ( op, 26, 31 );
 				unsigned int base = get_info_op ( op, 21, 25 );
 				unsigned int rt = get_info_op ( op, 16, 20 );
-				unsigned int offset = get_info_op ( op, 0, 15 );
+				unsigned short offset = get_info_op ( op, 0, 15 );
 
 				printf ( "%s %s, 0x%x(%s)\n", mips32_op[index].special_cmd,
 						get_name_register ( rt ),
 						offset,
 						get_name_register ( base )
 				       );
+
+				mr.base = base;
+				mr.rt = rt;
+				mips32_op[index].operate ( &mr, offset < 0x8000 ? offset : (short) offset );
 			}
 			break;
 		case 6: {
 				unsigned int operate = get_info_op ( op, 26, 31 );
 				unsigned int zero = get_info_op ( op, 21, 25 );
 				unsigned int rt = get_info_op ( op, 16, 20 );
-				unsigned int immediate = get_info_op ( op, 0, 15 );
+				unsigned short immediate = get_info_op ( op, 0, 15 );
 
 				printf ( "%s %s, 0x%x\n", mips32_op[index].special_cmd,
 						get_name_register ( rt ),
 						immediate
 				       );
+
+				mr.rt = rt;
+				mips32_op[index].operate ( &mr, immediate );
+			}
+			break;
+
+		case 7: {
+				unsigned int operate = get_info_op ( op, 26, 31 );
+				unsigned int rs = get_info_op ( op, 21, 25 );
+				unsigned int rt = get_info_op ( op, 16, 20 );
+				unsigned int offset = get_info_op ( op, 0, 15 );
+				offset <<= 2;
+
+				printf ( "%s %s, %s, 0x%x\n", mips32_op[index].special_cmd,
+						get_name_register ( rs ),
+						get_name_register ( rt ),
+						pointer + offset + 4
+				       );
+			}
+			break;
+		case 8: {
+				if ( op == 0 ) {
+					printf ( "%s\n", mips32_op[index].special_cmd );
+				}
 			}
 			break;
 	}
 }
 
-static void parse_operation ( const int op ) {
+static void parse_operation ( const int op, const unsigned int pointer ) {
 	int first = get_info_op ( op, 26, 31 );
 	int last = get_info_op ( op, 0, 5 );
 
 	switch ( first ) {
 		case MIPS_SPECIAL_CUSTOM: {
-						  int index = get_index_op_last ( last );
+						  int index = get_index_op_last ( last, MIPS_SPECIAL_CUSTOM );
 						  if ( index == -1 ) {
 							  printf ( "not found index\n" );
 							  exit ( EXIT_FAILURE );
 						  }
-						  scheme ( index, op );
+						  scheme ( index, op, pointer );
 					  }
 					  break;
 		case MIPS_COP1_CUSTOM: {
@@ -161,7 +196,7 @@ static void parse_operation ( const int op ) {
 					 printf ( "not found index\n" );
 					 exit ( EXIT_FAILURE );
 				 }
-				 scheme ( index, op );
+				 scheme ( index, op, pointer );
 			 }
 			 break;
 				
@@ -175,7 +210,7 @@ static void decompile ( const char * const program_buffer, const int size_of_sec
 		unsigned int offset = pointer & 0xfffff;
 		const unsigned int *operation = ( const unsigned int * ) ( program_buffer + offset );
 		printf ( "0x%08x: ", pointer );
-		parse_operation ( *operation );
+		parse_operation ( *operation, pointer );
 		pointer += 3;
 	}
 }
