@@ -72,8 +72,13 @@
  * 	25-21 rs
  * 	20-11 zero
  * 	10-6  hint
-* 	5-0   operate
- *
+ * 	5-0   operate
+ * 
+ * 11.
+ * 	31-26 regimm
+ * 	25-21 rs
+ * 	20-16 operate
+ * 	15-0  offset
  */
 #include "mips32_registers.h"
 
@@ -91,6 +96,8 @@ void mips32_operate_beq ( struct mips32_registers *mr, short static_number );
 void mips32_operate_nop ( struct mips32_registers *mr, short static_number );
 void mips32_operate_jalr ( struct mips32_registers *mr, short static_number );
 void mips32_operate_jr ( struct mips32_registers *mr, short static_number );
+void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number );
+void mips32_operate_and ( struct mips32_registers *mr, short static_number );
 
 #define FIRST        0
 #define LAST         1
@@ -98,6 +105,7 @@ void mips32_operate_jr ( struct mips32_registers *mr, short static_number );
 
 #define MIPS_NONE_SPECIAL_CUSTOM      0xfffff
 #define MIPS_SPECIAL_CUSTOM           0x0
+#define MIPS_REGIMM_CUSTOM            0x1
 #define MIPS_COP1_CUSTOM              0x11
 #define MIPS_INS_ABS_S_FMT_CUSTOM     0x5
 #define MIPS_INS_ADD_CUSTOM           0x20
@@ -113,6 +121,9 @@ void mips32_operate_jr ( struct mips32_registers *mr, short static_number );
 #define MIPS_INS_NOP_CUSTOM           0x0
 #define MIPS_INS_JALR_CUSTOM          0x9
 #define MIPS_INS_JR_CUSTOM            0x8
+#define MIPS_INS_BAL_CUSTOM           0x1
+#define MIPS_INS_BGEZAL_CUSTOM        0x11
+#define MIPS_INS_AND_CUSTOM           0x24
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
@@ -144,7 +155,9 @@ struct mips32_operators {
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BEQ_CUSTOM, "beq", mips32_operate_beq, 3, 7, FIRST },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_NOP_CUSTOM, "nop", mips32_operate_nop, 0, 8, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_JALR_CUSTOM, "jalr", mips32_operate_jalr, 1, 9, BOTH },
-	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_JR_CUSTOM, "jr", mips32_operate_jr, 1, 10, BOTH }
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_JR_CUSTOM, "jr", mips32_operate_jr, 1, 10, BOTH },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZAL_CUSTOM, "bgezal", mips32_operate_bgezal, 2, 11, BOTH },
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_AND_CUSTOM, "and", mips32_operate_and, 3, 2, BOTH }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
