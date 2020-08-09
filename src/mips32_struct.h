@@ -103,6 +103,7 @@ void mips32_operate_jr ( struct mips32_registers *mr, short static_number, int )
 void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_and ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_jal ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_addu ( struct mips32_registers *mr, short static_number, int );
 
 #define FIRST        0
 #define LAST         1
@@ -130,6 +131,7 @@ void mips32_operate_jal ( struct mips32_registers *mr, short static_number, int 
 #define MIPS_INS_BGEZAL_CUSTOM        0x11
 #define MIPS_INS_AND_CUSTOM           0x24
 #define MIPS_INS_JAL_CUSTOM           0x3
+#define MIPS_INS_ADDU_CUSTOM          0x21
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
@@ -164,7 +166,8 @@ struct mips32_operators {
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_JR_CUSTOM, "jr", mips32_operate_jr, 1, 10, BOTH },
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZAL_CUSTOM, "bgezal", mips32_operate_bgezal, 2, 11, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_AND_CUSTOM, "and", mips32_operate_and, 3, 2, BOTH },
-	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_JAL_CUSTOM, "jal", mips32_operate_jal, 1, 12, FIRST }
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_JAL_CUSTOM, "jal", mips32_operate_jal, 1, 12, FIRST },
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_ADDU_CUSTOM, "addu", mips32_operate_addu, 3, 2, BOTH }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );

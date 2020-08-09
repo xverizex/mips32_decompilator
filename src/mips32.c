@@ -9,6 +9,7 @@
 struct info {
 	char *name;
 	unsigned int addr;
+	unsigned int vaddr;
 	unsigned int type;
 };
 
@@ -17,7 +18,15 @@ struct sym {
 	int count;
 } sym;
 
+struct sect {
+	struct info *offset;
+	int count;
+} sect;
+
 static void exec_pfaf_n ( int );
+static int xchange ( int num );
+static short change ( short num );
+static int exec_pfaf_num ( unsigned int num );
 
 int global_engian;
 unsigned int address;
@@ -26,11 +35,17 @@ unsigned int global_pointer;
 unsigned int global_text_size;
 const char *global_file_buffer;
 unsigned int global_find_offset;
+unsigned int global_pfaf_find_offset;
+unsigned int global_pfaf_num_pointer;
 int global_pfaf_found;
 int switch_pfa;
 int switch_pfaf;
 int global_print;
 extern int global_engian;
+int index_section_text;
+int switch_gp_offset;
+int switch_pfaf_num;
+int stage_gp;
 
 #define NO_PRINT              1
 #define PRINT                 0
@@ -94,7 +109,7 @@ static char *colored_num ( const unsigned int p, const int color, int index ) {
 }
 
 static unsigned int get_address_offset ( unsigned int p ) {
-	int *ad = ( int * ) ( global_file_buffer + p );
+	unsigned int *ad = ( unsigned int * ) ( global_file_buffer + p );
 	return *ad;
 }
 
@@ -103,7 +118,9 @@ static void print_comment_function ( const unsigned int pp, const unsigned int o
 		if ( sym.offset[i].addr == offset ) {
 			if ( sym.offset[i].name[0] == 0 ) continue;
 			if ( !strncmp ( sym.offset[i].name, "_MIPS_STUBS_", 13 ) ) continue;
-			printf ( " ; [%08x:%08x] %s", pp, offset, sym.offset[i].name );
+			printf ( " ; [%08x:%08x] ", pp, offset );
+			if ( sym.offset[i].type == STT_OBJECT ) printf ( "struct " );
+			printf ( "%s", sym.offset[i].name );
 			return;
 		}
 	}
@@ -116,20 +133,54 @@ void mips32_operate_abs_s ( struct mips32_registers *mr, short static_number, in
 }
 
 void mips32_operate_add ( struct mips32_registers *mr, short static_number, int sec_num ) {
+	if ( switch_gp_offset && mr->rd == MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rd] = cpuc.r[mr->rs] + cpuc.r[mr->rt];
+		stage_gp++;
+		if ( stage_gp >= 2 ) switch_gp_offset = 0;
+	} else if ( mr->rt != MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rd] = cpuc.r[mr->rs] + cpuc.r[mr->rt];
+		if ( switch_pfaf ) {
+			if ( mr->rd == MIPS_REG_SP_CUSTOM && mr->rs == MIPS_REG_SP_CUSTOM ) {
+				if ( static_number < 0x8000 ) {
+					exec_pfaf_n ( global_pointer );		
+				}
+			}
+		}
+	}
 }
 
 void mips32_operate_add_s ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
 void mips32_operate_addi ( struct mips32_registers *mr, short static_number, int sec_num ) {
+	if ( switch_gp_offset && mr->rt == MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
+		stage_gp++;
+		if ( stage_gp >= 2 ) switch_gp_offset = 0;
+	} else if ( mr->rt != MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
+		if ( switch_pfaf ) {
+			if ( mr->rt == MIPS_REG_SP_CUSTOM && mr->rs == MIPS_REG_SP_CUSTOM ) {
+				if ( static_number < 0x8000 ) {
+					exec_pfaf_n ( global_pointer );		
+				}
+			}
+		}
+	}
 }
 
 void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, int sec_num ) {
-	cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
-	if ( switch_pfaf ) {
-		if ( mr->rt == MIPS_REG_SP_CUSTOM && mr->rs == MIPS_REG_SP_CUSTOM ) {
-			if ( static_number < 0x8000 ) {
-				exec_pfaf_n ( global_pointer );		
+	if ( switch_gp_offset && mr->rt == MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
+		stage_gp++;
+		if ( stage_gp >= 2 ) switch_gp_offset = 0;
+	} else if ( mr->rt != MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
+		if ( switch_pfaf ) {
+			if ( mr->rt == MIPS_REG_SP_CUSTOM && mr->rs == MIPS_REG_SP_CUSTOM ) {
+				if ( static_number < 0x8000 ) {
+					exec_pfaf_n ( global_pointer );		
+				}
 			}
 		}
 	}
@@ -142,19 +193,51 @@ void mips32_operate_or ( struct mips32_registers *mr, short static_number, int s
 }
 
 void mips32_operate_lui ( struct mips32_registers *mr, short static_number, int sec_num ) {
-	cpuc.r[mr->rt] = 0;
-	cpuc.r[mr->rt] = ( static_number << 16 ) & 0xffff0000;
+	if ( switch_gp_offset && mr->rt == MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rt] = 0;
+		cpuc.r[mr->rt] = ( static_number << 16 ) & 0xffff0000;
+		stage_gp++;
+		if ( stage_gp >= 2 ) switch_gp_offset = 1;
+	} else if ( mr->rt != MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rt] = 0;
+		cpuc.r[mr->rt] = ( static_number << 16 ) & 0xffff0000;
+	} else if ( mr->rt == MIPS_REG_GP_CUSTOM ) {
+		if ( switch_pfaf_num ) {
+			if ( mr->rt == MIPS_REG_GP_CUSTOM  ) {
+				if ( static_number < 0x8000 ) {
+					if ( switch_pfaf_num ) {
+						exec_pfaf_n ( global_pfaf_num_pointer );		
+					}
+				}
+			}
+		} else if ( switch_pfaf ) {
+			if ( mr->rt == MIPS_REG_GP_CUSTOM  ) {
+				if ( static_number < 0x8000 ) {
+					exec_pfaf_n ( global_pointer );		
+				}
+			}
+		}
+	}
 }
 
 void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int sec_num ) {
-	cpuc.r[mr->rt] = cpuc.r[mr->base] + static_number;
+	if ( mr->rt == MIPS_REG_GP_CUSTOM ) return;
+	cpuc.r[mr->rt] = 0;
+	cpuc.r[mr->rt] = (unsigned int) ( cpuc.r[mr->base] + static_number );
 	unsigned int p = cpuc.r[mr->rt] & 0xffff;
+
+	for ( int i = 0; i < sect.count - 1; i++ ) {
+		if ( sect.offset[i].vaddr >= cpuc.r[mr->rt] && sect.offset[i+1].vaddr <= cpuc.r[mr->rt] ) {
+			p |= sect.offset[i].addr & 0xffff0000;
+		}
+	}
+
 	unsigned int pp = cpuc.r[mr->rt];
-	unsigned int offset_to_address = get_address_offset ( p );
+	unsigned int offset_to_address = xchange ( get_address_offset ( p ) );
 	if ( global_print ) print_comment_function ( pp, offset_to_address );
 	if ( switch_pfa ) {
 		if ( global_find_offset == offset_to_address ) {
-			printf ( "%s\n", colored_num ( global_pointer, COLOR_ADDRESS, 1 ) );
+			if ( !switch_pfaf_num ) exec_pfaf_num ( global_pointer );
 		}
 	}
 }
@@ -185,6 +268,14 @@ void mips32_operate_jal ( struct mips32_registers *mr, short static_number, int 
 		if ( global_find_offset == sec_num ) {
 			printf ( "%s\n", colored_num ( global_pointer, COLOR_ADDRESS, 1 ) );
 		}
+	}
+}
+
+void mips32_operate_addu ( struct mips32_registers *mr, short static_number, int sec_num ) {
+	if ( switch_gp_offset && mr->rd == MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rd] = cpuc.r[mr->rs] + cpuc.r[mr->rt];
+	} else if ( mr->rd != MIPS_REG_GP_CUSTOM ) {
+		cpuc.r[mr->rd] = cpuc.r[mr->rs] + cpuc.r[mr->rt];
 	}
 }
 
@@ -264,6 +355,12 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 						colored_string ( get_name_register ( rt ), COLOR_REGISTER, 4 )
 				       );
 
+
+				mr.rd = rd;
+				mr.rs = rs;
+				mr.rt = rt;
+				mips32_op[index].operate ( &mr, 0, 0 );
+
 				if ( dialog == PRINT )
 				printf ( "\n" );
 				
@@ -302,8 +399,9 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 				unsigned short offset = get_info_op ( op, 0, 15 );
 
 				if ( dialog == PRINT )
-				printf ( "%s %s, %s(%s)", colored_string ( mips32_op[index].special_cmd, COLOR_LOAD_SAVE, 1 ),
+				printf ( "%s %s, %c%s(%s)", colored_string ( mips32_op[index].special_cmd, COLOR_LOAD_SAVE, 1 ),
 						colored_string ( get_name_register ( rt ), COLOR_REGISTER, 2 ),
+						offset < 0x8000 ? 0 : '-',
 						colored_num ( offset < 0x8000 ? (unsigned short) offset : (short) ( 0x0 - offset & 0xffff ),
 						       COLOR_NUMBER, 3 ),
 						colored_string ( get_name_register ( base ), COLOR_REGISTER, 4 )
@@ -507,7 +605,6 @@ static int check_is_number ( char *val ) {
 }
 
 static void exec_pd ( char *param ) {
-	global_print = 1;
 	if ( !check_is_number ( param ) ) {
 		printf ( "Должно быть число.\n" );
 		return;
@@ -515,14 +612,17 @@ static void exec_pd ( char *param ) {
 
 	unsigned int lines = atoi ( param );
 
-	for ( int pointer = address, i = 0; i < lines; pointer++, i++ ) {
-		unsigned int offset = pointer & 0xfffff;
+	global_print = 1;
+	for ( int pointer = address, i = 0; i < lines; i++ ) {
+		unsigned int offset = pointer & 0xffff;
+		offset |= sect.offset[index_section_text].addr & 0xffff0000;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		printf ( "%s: ", colored_num ( pointer, COLOR_ADDRESS, 0 ) );
 		global_pointer = pointer;
-		parse_operation ( *operation, pointer, PRINT );
-		pointer += 3;
+		parse_operation ( xchange ( *operation ), pointer, PRINT );
+		pointer += 4;
 	}
+	global_print = 0;
 }
 
 static int check_is_hex ( char *val ) {
@@ -609,20 +709,23 @@ static void exec_pf ( ) {
 }
 
 static void exec_pfaf_n ( int num ) {
-	printf ( "%s ", colored_num ( num, COLOR_ADDRESS, 1 ) );
 	int pr = 0;
 
 	for ( int i = 0; i < sym.count; i++ ) {
 		if ( sym.offset[i].name[0] == 0 ) continue;
 		if ( sym.offset[i].addr == num ) {
 			if ( !strncmp ( sym.offset[i].name, "_MIPS_STUBS_", 13 ) ) continue;
-			printf ( "%s\n", colored_string ( sym.offset[i].name, COLOR_FUNCTION, 2 ) );
-			pr = 1;
-			global_pfaf_found = 1;
+			if ( sym.offset[i].name[0] != 0 ) {
+				printf ( "%s ", colored_num ( num, COLOR_ADDRESS, 1 ) );
+				printf ( "%s\n", colored_string ( sym.offset[i].name, COLOR_FUNCTION, 2 ) );
+				pr = 1;
+				global_pfaf_found = 1;
+				return;
+			}
 			break;
 		}
 	}
-	if ( !pr ) printf ( "\n" );
+	//if ( !pr ) printf ( "\n" );
 }
 static void exec_pfa ( char *param ) {
 	if ( !check_is_hex ( param ) ) {
@@ -633,43 +736,116 @@ static void exec_pfa ( char *param ) {
 
 	global_find_offset = get_hex_offset ( param );
 
+	switch_pfa = 1;
+	global_print = 0;
 	for ( int pointer = global_entry_point, i = 0; i < global_text_size; i += 4 ) {
-		unsigned int offset = pointer & 0xfffff;
+		unsigned int offset = pointer & 0xffff;
+		offset |= sect.offset[index_section_text].addr & 0xffff0000;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		global_pointer = pointer;
-		switch_pfa = 1;
-		global_print = 0;
-		parse_operation ( *operation, pointer, NO_PRINT );
-		switch_pfa = 0;
-		global_print = 1;
+		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
 		pointer += 4;
 	}
+	global_print = 1;
+	switch_pfa = 0;
 }
 
-static void exec_pfaf ( char *param ) {
+static void get_gp_offset ( ) {
+	switch_gp_offset = 1;
+	
+	int lines = 100;
+	for ( int pointer = address, i = 0; i < lines; i++ ) {
+		unsigned int offset = pointer & 0xffff;
+		offset |= sect.offset[index_section_text].addr & 0xffff0000;
+		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
+		//printf ( "%s: ", colored_num ( pointer, COLOR_ADDRESS, 0 ) );
+		global_pointer = pointer;
+		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		pointer += 4;
+		if ( !switch_gp_offset ) break;
+	}
+
+	switch_gp_offset = 0;
+}
+
+static int exec_pfaf_num ( unsigned int num ) {
+
+	global_pfaf_find_offset = num;
+
+	global_pfaf_found = 0;
+
+	switch_pfaf_num = 1;
+	global_print = 0;
+	for ( int pointer = global_pfaf_find_offset, i = 0; pointer > global_entry_point; i += 4 ) {
+		unsigned int offset = pointer & 0xffff;
+		offset |= sect.offset[index_section_text].addr & 0xffff0000;
+		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
+		global_pfaf_num_pointer = pointer;
+		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		pointer -= 4;
+		if ( global_pfaf_found ) {
+			global_pfaf_found = 0;
+			switch_pfaf_num = 0;
+			return 1;
+			break;
+		}
+	}
+	switch_pfaf_num = 0;
+
+	global_pfaf_found = 0;
+	return 0;
+}
+static int exec_pfaf ( char *param ) {
 	if ( !check_is_hex ( param ) ) {
 		printf ( "Должно быть шестнадцатеричное число.\n" );
-		return;
+		return 0;
 	}
 	if ( param[0] == '0' && param[1] == 'x' ) param += 2;
 
 	global_find_offset = get_hex_offset ( param );
 
+	switch_pfaf = 1;
+	global_print = 0;
 	for ( int pointer = global_find_offset, i = 0; pointer > global_entry_point; i += 4 ) {
-		unsigned int offset = pointer & 0xfffff;
+		unsigned int offset = pointer & 0xffff;
+		offset |= sect.offset[index_section_text].addr & 0xffff0000;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		global_pointer = pointer;
-		switch_pfaf = 1;
-		global_print = 0;
-		parse_operation ( *operation, pointer, NO_PRINT );
-		switch_pfaf = 0;
-		global_print = 1;
+		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
 		pointer -= 4;
 		if ( global_pfaf_found ) {
+			global_print = 1;
+			switch_pfaf = 0;
+			global_pfaf_found = 0;
+			return 1;
 			break;
 		}
 	}
+	global_print = 1;
+	switch_pfaf = 0;
+
 	global_pfaf_found = 0;
+	return 0;
+}
+
+static void exec_pfn ( const char *val ) {
+	for ( int i = 0; i < sym.count; i++ ) {
+		if ( !strncmp ( sym.offset[i].name, val, strlen ( val ) + 1 ) ) {
+			printf ( "%s: %s\n", colored_num ( sym.offset[i].addr, COLOR_ADDRESS, 1 ),
+					colored_string ( sym.offset[i].name, COLOR_FUNCTION, 2 )
+			       );
+		}
+	}
+}
+
+static void exec_help ( ) {
+	printf ( 
+			" - pd [lines] - print disassemble. отобразить дизассемблированный код. lines - количество строк.\n"
+			" - pf - print functions. отобразить функции, которые есть в программе.\n"
+			" - pfa [address] - print function all call. узнать с какого адреса был вызов этой функции.\n"
+			" - pfaf [address] - print functions of function. узнать к какой функции принадлежит адрес.\n"
+			" - pfn [name] - print function of name. узнать какой адрес у функции.\n"
+	       );
 }
 
 static void parse_buf ( char *b ) {
@@ -725,11 +901,20 @@ static void parse_buf ( char *b ) {
 		exec_pfaf ( param );
 		return;
 	}
+	if ( !strncmp ( cmd, "pfn", 4 ) ) {
+		exec_pfn ( param );
+		return;
+	}
+	if ( !strncmp ( cmd, "h", 2 ) || !strncmp ( cmd, "help", 5 ) ) {
+		exec_help ( );
+		return;
+	}
 }
 
 static void decompile ( const char * const program_buffer, const int size_of_section_code ) {
 	const int end_address = address + size_of_section_code;
 	global_file_buffer = program_buffer;
+	get_gp_offset ( );
 	char buf[255];
 
 	while ( 1 ) {
@@ -763,6 +948,11 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 		fprintf ( stderr, "No alloc memomy.\n" );
 		exit ( EXIT_FAILURE );
 	}
+	sect.offset = calloc ( 0, 0 );
+	if ( !sect.offset ) {
+		fprintf ( stderr, "No alloc memomy.\n" );
+		exit ( EXIT_FAILURE );
+	}
 
 	Elf32_Shdr *section_header = ( Elf32_Shdr * ) &program_buffer[xchange ( program_header->e_shoff ) ];
 
@@ -777,6 +967,21 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 
 	for ( int i = 0; i < sections_header_count; i++ ) {
 		const char *name = program_buffer + xchange ( section_string_table->sh_offset ) + xchange ( section_header->sh_name );
+
+		int index = sect.count++;
+		sect.offset = realloc ( sect.offset, sizeof ( struct info ) * sect.count );
+		if ( !sect.offset ) {
+			fprintf ( stderr, "sect.offset realloc %s:%d\n", __FILE__, __LINE__ );
+			exit ( EXIT_FAILURE );
+		}
+		sect.offset[index].name = calloc ( strlen ( name ) + 1, 1 );
+	        if ( !sect.offset[index].name ) {
+		       fprintf ( stderr, "sym.offset[index].name calloc %s:%d\n", __FILE__, __LINE__ );
+		       exit ( EXIT_FAILURE );
+	        }
+	       strncpy ( sect.offset[index].name, name, strlen ( name ) );
+	       sect.offset[index].addr = xchange ( section_header->sh_offset );
+	       sect.offset[index].vaddr = xchange ( section_header->sh_addr );
 #if 0
 		if ( xchange ( section_header->sh_type ) == SHT_SYMTAB ) {
 			section_sym = section_header;
@@ -784,6 +989,7 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 		}
 #endif
 		if ( !strncmp ( name, ".text", 6 ) ) {
+			index_section_text = index;
 			section_code = section_header;
 			size_of_section_code = xchange ( section_code->sh_size );
 		}
