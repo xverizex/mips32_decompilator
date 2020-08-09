@@ -46,6 +46,7 @@ extern int global_engian;
 int index_section_text;
 int switch_gp_offset;
 int switch_pfaf_num;
+int switch_pff;
 int stage_gp;
 
 char temp_buffer[255];
@@ -116,6 +117,17 @@ static unsigned int get_address_offset ( unsigned int p ) {
 	return *ad;
 }
 
+static void print_pff ( const unsigned int pp, unsigned int offset ) {
+	for ( int i = 0; i < sym.count; i++ ) {
+		if ( sym.offset[i].addr == offset ) {
+			if ( sym.offset[i].name[0] == 0 ) continue;
+			if ( !strncmp ( sym.offset[i].name, "_MIPS_STUBS_", 13 ) ) continue;
+			if ( sym.offset[i].type == STT_FUNC ) printf ( "%s: %s\n", colored_num ( global_pointer, COLOR_ADDRESS, 1 ), 
+					colored_string ( sym.offset[i].name, COLOR_FUNCTION, 2 ) );
+			return;
+		}
+	}
+}
 static void print_comment_function ( const unsigned int pp, unsigned int offset ) {
 	for ( int i = 0; i < sym.count; i++ ) {
 		if ( sym.offset[i].addr == offset ) {
@@ -133,8 +145,11 @@ static void print_comment_function ( const unsigned int pp, unsigned int offset 
 			unsigned int off = ( sect.offset[i].addr & 0xffff0000 ) | ( pp & 0xffff );
 			const char *str = ( global_file_buffer + off );
 			if ( str[0] > 0 ) {
-				printf ( "; %s", str );
+				printf ( "; %s; ", str );
 			}
+			const int *n = (const int *) str;
+			printf ( "int=%d ", *n );
+			return;
 		}
 	}
 }
@@ -206,6 +221,9 @@ void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, in
 	}
 	unsigned int pp = cpuc.r[mr->rt];
 	unsigned int offset_to_address = xchange ( get_address_offset ( p ) );
+	if ( switch_pff ) {
+		print_pff ( pp, offset_to_address );
+	}
 	if ( global_print ) print_comment_function ( pp, offset_to_address );
 }
 
@@ -260,12 +278,14 @@ void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int s
 
 	unsigned int pp = cpuc.r[mr->rt];
 	unsigned int offset_to_address = xchange ( get_address_offset ( p ) );
-	if ( global_print ) print_comment_function ( pp, offset_to_address );
 	cpuc.r[mr->rt] = offset_to_address;
+	if ( global_print ) print_comment_function ( pp, offset_to_address );
+	if ( switch_pff ) {
+		print_pff ( pp, offset_to_address );
+	}
 	if ( switch_pfa ) {
 		if ( global_find_offset == offset_to_address ) {
 			if ( !switch_pfaf_num ) { 
-				//printf ( "%s call from ", colored_num ( global_pointer, COLOR_BE, 1 ) );
 				exec_pfaf_num ( global_pointer );
 			}
 		}
@@ -285,6 +305,10 @@ void mips32_operate_jalr ( struct mips32_registers *mr, short static_number, int
 }
 
 void mips32_operate_jr ( struct mips32_registers *mr, short static_number, int sec_num ) {
+	if ( mr->rs == MIPS_REG_RA_CUSTOM ) {
+		switch_pff = 0;
+		return;
+	}
 }
 
 void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number, int sec_num ) {
@@ -519,6 +543,9 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 				printf ( "%s %s", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ),
 						colored_string ( get_name_register ( rs ), COLOR_REGISTER, 2 )
 				       );
+
+				mr.rs = rs;
+				mips32_op[index].operate ( &mr, 0, 0 );
 
 				if ( dialog == PRINT )
 				printf ( "\n" );
@@ -802,6 +829,31 @@ static void exec_pfa ( char *param ) {
 	switch_pfa = 0;
 }
 
+static void exec_pff ( char *param ) {
+	if ( !check_is_hex ( param ) ) {
+		printf ( "Должно быть шестнадцатеричное число.\n" );
+		return;
+	}
+	if ( param[0] == '0' && param[1] == 'x' ) param += 2;
+	switch_pff = 1;
+
+	global_find_offset = get_hex_offset ( param );
+
+	global_print = 0;
+	for ( int pointer = global_find_offset, i = 0; i < 0xffff; i++ ) {
+		unsigned int offset = pointer & 0xffff;
+		offset |= sect.offset[index_section_text].addr & 0xffff0000;
+		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
+		global_pointer = pointer;
+		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		if ( !switch_pff ) break;
+		pointer += 4;
+	}
+	global_print = 0;
+
+	switch_pff = 0;
+}
+
 static void get_gp_offset ( ) {
 	switch_gp_offset = 1;
 	
@@ -898,6 +950,7 @@ static void exec_help ( ) {
 			" - pfaf [address] - print functions of function. узнать к какой функции принадлежит адрес.\n"
 			" - pfn [name] - print function of name. узнать какой адрес у функции.\n"
 			" - s [address] - seek to address. перейти на нужное смещение.\n"
+			" - pff [address] - print functions in function. отобразить функции, которые выполнятся в этой функции.\n"
 	       );
 }
 
@@ -956,6 +1009,10 @@ static void parse_buf ( char *b ) {
 	}
 	if ( !strncmp ( cmd, "pfn", 4 ) ) {
 		exec_pfn ( param );
+		return;
+	}
+	if( !strncmp ( cmd, "pff", 4 ) ) {
+		exec_pff ( param );
 		return;
 	}
 	if ( !strncmp ( cmd, "h", 2 ) || !strncmp ( cmd, "help", 5 ) ) {
