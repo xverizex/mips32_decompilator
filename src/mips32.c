@@ -24,6 +24,7 @@ struct sect {
 } sect;
 
 static void exec_pfaf_n ( int );
+static void exec_pfaf_ns ( int );
 static int xchange ( int num );
 static short change ( short num );
 static int exec_pfaf_num ( unsigned int num );
@@ -46,6 +47,8 @@ int index_section_text;
 int switch_gp_offset;
 int switch_pfaf_num;
 int stage_gp;
+
+char temp_buffer[255];
 
 #define NO_PRINT              1
 #define PRINT                 0
@@ -179,7 +182,7 @@ void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, in
 		if ( switch_pfaf ) {
 			if ( mr->rt == MIPS_REG_SP_CUSTOM && mr->rs == MIPS_REG_SP_CUSTOM ) {
 				if ( static_number < 0x8000 ) {
-					exec_pfaf_n ( global_pointer );		
+					//exec_pfaf_n ( global_pointer );		
 				}
 			}
 		}
@@ -204,18 +207,21 @@ void mips32_operate_lui ( struct mips32_registers *mr, short static_number, int 
 	} else if ( mr->rt == MIPS_REG_GP_CUSTOM ) {
 		if ( switch_pfaf_num ) {
 			if ( mr->rt == MIPS_REG_GP_CUSTOM  ) {
-				if ( static_number < 0x8000 ) {
-					if ( switch_pfaf_num ) {
-						exec_pfaf_n ( global_pfaf_num_pointer );		
-					}
-				}
+			//	if ( static_number < 0x8000 ) {
+						exec_pfaf_ns ( global_pfaf_num_pointer );		
+						if ( global_pfaf_found ) {
+							printf ( "%s: %s\n", colored_num ( global_pointer, COLOR_BE, 1 ), temp_buffer );
+						}
+			//	}
 			}
 		} else if ( switch_pfaf ) {
+#if 1
 			if ( mr->rt == MIPS_REG_GP_CUSTOM  ) {
 				if ( static_number < 0x8000 ) {
 					exec_pfaf_n ( global_pointer );		
 				}
 			}
+#endif
 		}
 	}
 }
@@ -237,7 +243,10 @@ void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int s
 	if ( global_print ) print_comment_function ( pp, offset_to_address );
 	if ( switch_pfa ) {
 		if ( global_find_offset == offset_to_address ) {
-			if ( !switch_pfaf_num ) exec_pfaf_num ( global_pointer );
+			if ( !switch_pfaf_num ) { 
+				//printf ( "%s call from ", colored_num ( global_pointer, COLOR_BE, 1 ) );
+				exec_pfaf_num ( global_pointer );
+			}
 		}
 	}
 }
@@ -708,6 +717,28 @@ static void exec_pf ( ) {
 	}
 }
 
+static void exec_pfaf_ns ( int num ) {
+	int pr = 0;
+
+	temp_buffer[0] = 0;
+	for ( int i = 0; i < sym.count; i++ ) {
+		if ( sym.offset[i].name[0] == 0 ) continue;
+		if ( sym.offset[i].addr == num ) {
+			if ( !strncmp ( sym.offset[i].name, "_MIPS_STUBS_", 13 ) ) continue;
+			if ( sym.offset[i].name[0] != 0 ) {
+				snprintf ( temp_buffer, 255, "%s %s", colored_num ( num, COLOR_ADDRESS, 1 ),
+						colored_string ( sym.offset[i].name, COLOR_FUNCTION, 2 )
+					 );
+				pr = 1;
+				global_pfaf_found = 1;
+				return;
+			}
+			break;
+		}
+	}
+	global_pfaf_found = 0;
+	//if ( !pr ) printf ( "\n" );
+}
 static void exec_pfaf_n ( int num ) {
 	int pr = 0;
 
