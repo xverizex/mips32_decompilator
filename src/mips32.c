@@ -116,7 +116,7 @@ static unsigned int get_address_offset ( unsigned int p ) {
 	return *ad;
 }
 
-static void print_comment_function ( const unsigned int pp, const unsigned int offset ) {
+static void print_comment_function ( const unsigned int pp, unsigned int offset ) {
 	for ( int i = 0; i < sym.count; i++ ) {
 		if ( sym.offset[i].addr == offset ) {
 			if ( sym.offset[i].name[0] == 0 ) continue;
@@ -125,6 +125,16 @@ static void print_comment_function ( const unsigned int pp, const unsigned int o
 			if ( sym.offset[i].type == STT_OBJECT ) printf ( "struct " );
 			printf ( "%s", sym.offset[i].name );
 			return;
+		}
+	}
+
+	for ( int i = 0; i < sect.count - 1; i++ ) {
+		if ( pp >= sect.offset[i].vaddr && pp <= sect.offset[i+1].vaddr ) {
+			unsigned int off = ( sect.offset[i].addr & 0xffff0000 ) | ( pp & 0xffff );
+			const char *str = ( global_file_buffer + off );
+			if ( str[0] > 0 ) {
+				printf ( "; %s", str );
+			}
 		}
 	}
 }
@@ -187,6 +197,16 @@ void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, in
 			}
 		}
 	}
+
+	unsigned int p = cpuc.r[mr->rt] & 0xffff;
+	for ( int i = 0; i < sect.count - 1; i++ ) {
+		if ( sect.offset[i].vaddr >= cpuc.r[mr->rt] && sect.offset[i+1].vaddr <= cpuc.r[mr->rt] ) {
+			p |= sect.offset[i].addr & 0xffff0000;
+		}
+	}
+	unsigned int pp = cpuc.r[mr->rt];
+	unsigned int offset_to_address = xchange ( get_address_offset ( p ) );
+	if ( global_print ) print_comment_function ( pp, offset_to_address );
 }
 
 void mips32_operate_sw ( struct mips32_registers *mr, short static_number, int sec_num ) {
@@ -241,6 +261,7 @@ void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int s
 	unsigned int pp = cpuc.r[mr->rt];
 	unsigned int offset_to_address = xchange ( get_address_offset ( p ) );
 	if ( global_print ) print_comment_function ( pp, offset_to_address );
+	cpuc.r[mr->rt] = offset_to_address;
 	if ( switch_pfa ) {
 		if ( global_find_offset == offset_to_address ) {
 			if ( !switch_pfaf_num ) { 
@@ -685,7 +706,7 @@ static unsigned int get_hex_offset ( char *param ) {
 	int length = strlen ( param );
 	char *s = &param[length-1];
 	unsigned int number = 0;
-	int hex = 0;
+	int hex = 1;
 
 	for ( int i = 0; i < length; i++ ) {
 		number |= get_hex ( *s ) * hex;
@@ -876,6 +897,7 @@ static void exec_help ( ) {
 			" - pfa [address] - print function all call. узнать с какого адреса был вызов этой функции.\n"
 			" - pfaf [address] - print functions of function. узнать к какой функции принадлежит адрес.\n"
 			" - pfn [name] - print function of name. узнать какой адрес у функции.\n"
+			" - s [address] - seek to address. перейти на нужное смещение.\n"
 	       );
 }
 
