@@ -197,6 +197,64 @@ void mips32_operate_addi ( struct mips32_registers *mr, short static_number, int
 	}
 }
 
+void mips32_operate_andi ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+
+void mips32_cop2_operate_bc ( struct mips32_registers *mr, short static_number, int sec_num ) {
+	unsigned int offset = ( unsigned int ) ( (unsigned int ) static_number << 2 );
+	if ( mr->nd == 0 && mr->tf == 0 ) {
+		printf ( "%s %s, %s", colored_string ( "bc2f", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+	if ( mr->nd == 1 && mr->tf == 0 ) {
+		printf ( "%s %s, %s", colored_string ( "bc2fl", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+	if ( mr->nd == 0 && mr->tf == 1 ) {
+		printf ( "%s %s, %s", colored_string ( "bc2t", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+	if ( mr->nd == 1 && mr->tf == 1 ) {
+		printf ( "%s %s, %s", colored_string ( "bc2tl", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+}
+void mips32_cop1_operate_bc ( struct mips32_registers *mr, short static_number, int sec_num ) {
+	unsigned int offset = ( unsigned int ) ( (unsigned int ) static_number << 2 );
+	if ( mr->nd == 0 && mr->tf == 0 ) {
+		printf ( "%s %s, %s", colored_string ( "bc1f", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+	if ( mr->nd == 1 && mr->tf == 0 ) {
+		printf ( "%s %s, %s", colored_string ( "bc1fl", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+	if ( mr->nd == 0 && mr->tf == 1 ) {
+		printf ( "%s %s, %s", colored_string ( "bc1t", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+	if ( mr->nd == 1 && mr->tf == 1 ) {
+		printf ( "%s %s, %s", colored_string ( "bc1tl", COLOR_OPERATE, 1 ),
+				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
+				colored_num ( offset, COLOR_NUMBER, 3 )
+		       );
+	}
+}
+
 void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, int sec_num ) {
 	if ( switch_gp_offset && mr->rt == MIPS_REG_GP_CUSTOM ) {
 		cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
@@ -298,6 +356,9 @@ void mips32_operate_slti ( struct mips32_registers *mr, short static_number, int
 void mips32_operate_beq ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
+void mips32_operate_beql ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+
 void mips32_operate_nop ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
@@ -305,13 +366,29 @@ void mips32_operate_jalr ( struct mips32_registers *mr, short static_number, int
 }
 
 void mips32_operate_jr ( struct mips32_registers *mr, short static_number, int sec_num ) {
-	if ( mr->rs == MIPS_REG_RA_CUSTOM ) {
-		switch_pff = 0;
-		return;
+	if ( switch_pff ) {
+		if ( mr->rs == MIPS_REG_RA_CUSTOM ) {
+			switch_pff = 0;
+			return;
+		}
 	}
 }
 
+void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+void mips32_operate_blez ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+void mips32_operate_bgtz ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+void mips32_operate_bgtzl ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+void mips32_operate_bgez ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+void mips32_operate_bgezl ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
 void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number, int sec_num ) {
+}
+void mips32_operate_bgezall ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
 void mips32_operate_and ( struct mips32_registers *mr, short static_number, int sec_num ) {
@@ -348,6 +425,12 @@ static unsigned int get_offset_by_name ( const char * const name ) {
 	return 0;
 }
 
+static unsigned int get_info_op_one_bit ( unsigned int op, const int pos ) {
+	op >>= pos;
+	unsigned int num = op & 1;
+
+	return num;
+}
 static unsigned int get_info_op ( unsigned int op, int start, int end ) {
 	unsigned int num = 0;
 	op >>= start;
@@ -362,6 +445,13 @@ static unsigned int get_info_op ( unsigned int op, int start, int end ) {
 	return num;
 }
 
+static int get_index_op_cop_2 ( const int operate, unsigned int o ) {
+	for ( int i = 0; i < mips32_ops_count; i++ ) {
+		if ( mips32_op[i].check == BOTH && mips32_op[i].o == o )
+			if ( mips32_op[i].special == operate ) return i;
+	}
+	return -1;
+}
 static int get_index_op_first ( const int first ) {
 	for ( int i = 0; i < mips32_ops_count; i++ ) {
 		if ( mips32_op[i].check == FIRST )
@@ -586,6 +676,21 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 					 printf ( "\n" );
 			 }
 			 break;
+		case 13: { // bc
+				 unsigned short operate = get_info_op ( op, 21, 25 );
+				 unsigned short cc = get_info_op ( op, 18, 20 );
+				 unsigned short nd = get_info_op_one_bit ( op, 17 );
+				 unsigned short tf = get_info_op_one_bit ( op, 16 );
+				 unsigned short offset = get_info_op ( op, 0, 15 );
+
+				 mr.cc = cc;
+				 mr.nd = nd;
+				 mr.tf = tf;
+				 mips32_op[index].operate ( &mr, offset, 0 );
+
+				 printf ( "\n" );
+			 }
+			 break;
 	}
 }
 
@@ -637,6 +742,17 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 					  }
 					  break;
 		case MIPS_COP1_CUSTOM: {
+					       unsigned short operate = get_info_op ( op, 21, 25 );
+					       int index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM );
+
+					       scheme ( index, op, pointer, dialog );
+				       }
+				       break;
+		case MIPS_COP2_CUSTOM: {
+					       unsigned short operate = get_info_op ( op, 21, 25 );
+					       int index = get_index_op_cop_2 ( operate, MIPS_COP2_CUSTOM );
+
+					       scheme ( index, op, pointer, dialog );
 				       }
 				       break;
 		default: {

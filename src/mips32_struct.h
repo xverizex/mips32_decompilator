@@ -83,6 +83,14 @@
  * 12.
  * 	31-26 operate
  * 	25-0  instr_index
+ *
+ * 13.
+ * 	31-26 cop1
+ * 	25-21 operate
+ * 	20-18 cc
+ * 	17    nd
+ * 	16    tf
+ * 	15-0  offset
  */
 #include "mips32_registers.h"
 
@@ -104,6 +112,17 @@ void mips32_operate_bgezal ( struct mips32_registers *mr, short static_number, i
 void mips32_operate_and ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_jal ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_addu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_andi ( struct mips32_registers *mr, short static_number, int );
+void mips32_cop1_operate_bc ( struct mips32_registers *mr, short static_number, int );
+void mips32_cop2_operate_bc ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_beql ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bgez ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bgezall ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bgezl ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bgtz ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bgtzl ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_blez ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, int );
 
 #define FIRST        0
 #define LAST         1
@@ -113,6 +132,7 @@ void mips32_operate_addu ( struct mips32_registers *mr, short static_number, int
 #define MIPS_SPECIAL_CUSTOM           0x0
 #define MIPS_REGIMM_CUSTOM            0x1
 #define MIPS_COP1_CUSTOM              0x11
+#define MIPS_COP2_CUSTOM              0x12
 #define MIPS_INS_ABS_S_FMT_CUSTOM     0x5
 #define MIPS_INS_ADD_CUSTOM           0x20
 #define MIPS_INS_ADD_FMT_CUSTOM       0x0
@@ -132,10 +152,21 @@ void mips32_operate_addu ( struct mips32_registers *mr, short static_number, int
 #define MIPS_INS_AND_CUSTOM           0x24
 #define MIPS_INS_JAL_CUSTOM           0x3
 #define MIPS_INS_ADDU_CUSTOM          0x21
+#define MIPS_INS_ANDI_CUSTOM          0xc
+#define MIPS_INS_BC_CUSTOM            0x8
+#define MIPS_INS_BEQL_CUSTOM          0x14
+#define MIPS_INS_BGEZ_CUSTOM          0x1
+#define MIPS_INS_BGEZALL_CUSTOM       0x13
+#define MIPS_INS_BGEZL_CUSTOM         0x3
+#define MIPS_INS_BGTZ_CUSTOM          0x7
+#define MIPS_INS_BGTZL_CUSTOM         0x17
+#define MIPS_INS_BLEZ_CUSTOM          0x6
+#define MIPS_INS_BLEZL_CUSTOM         0x16
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
-	MIPS_COP1_CUSTOM
+	MIPS_COP1_CUSTOM,
+	MIPS_COP2_CUSTOM
 };
 
 int both_count = sizeof ( both ) / sizeof ( int );
@@ -167,7 +198,18 @@ struct mips32_operators {
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZAL_CUSTOM, "bgezal", mips32_operate_bgezal, 2, 11, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_AND_CUSTOM, "and", mips32_operate_and, 3, 2, BOTH },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_JAL_CUSTOM, "jal", mips32_operate_jal, 1, 12, FIRST },
-	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_ADDU_CUSTOM, "addu", mips32_operate_addu, 3, 2, BOTH }
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_ADDU_CUSTOM, "addu", mips32_operate_addu, 3, 2, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_ANDI_CUSTOM, "andi", mips32_operate_andi, 3, 4, FIRST },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_BC_CUSTOM, "bc", mips32_cop1_operate_bc, 2, 13, BOTH },
+	{ MIPS_COP2_CUSTOM, MIPS_INS_BC_CUSTOM, "bc", mips32_cop2_operate_bc, 2, 13, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BEQL_CUSTOM, "beq", mips32_operate_beql, 3, 7, FIRST },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZ_CUSTOM, "bgez", mips32_operate_bgez, 2, 11, BOTH },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZALL_CUSTOM, "bgezall", mips32_operate_bgezall, 2, 11, BOTH },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZL_CUSTOM, "bgezl", mips32_operate_bgezl, 2, 11, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BGTZ_CUSTOM, "bgtz", mips32_operate_bgtz, 3, 7, FIRST },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BGTZL_CUSTOM, "bgtzl", mips32_operate_bgtzl, 3, 7, FIRST },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BLEZ_CUSTOM, "blez", mips32_operate_blez, 3, 7, FIRST },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BLEZL_CUSTOM, "blezl", mips32_operate_blezl, 3, 7, FIRST }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
