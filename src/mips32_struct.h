@@ -1,6 +1,5 @@
 #ifndef __MIPS32_STRUCT__
 #define __MIPS32_STRUCT__
-#include <capstone/mips.h>
 /*
  * scheme
  * 1.
@@ -130,9 +129,11 @@ void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, in
 
 #define MIPS_NONE_SPECIAL_CUSTOM      0xfffff
 #define MIPS_SPECIAL_CUSTOM           0x0
+#define MIPS_SPECIAL_2_CUSTOM         0x1b
 #define MIPS_REGIMM_CUSTOM            0x1
 #define MIPS_COP1_CUSTOM              0x11
 #define MIPS_COP2_CUSTOM              0x12
+#define MIPS_COP0_CUSTOM              0x10
 #define MIPS_INS_ABS_S_FMT_CUSTOM     0x5
 #define MIPS_INS_ADD_CUSTOM           0x20
 #define MIPS_INS_ADD_FMT_CUSTOM       0x0
@@ -162,6 +163,87 @@ void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, in
 #define MIPS_INS_BGTZL_CUSTOM         0x17
 #define MIPS_INS_BLEZ_CUSTOM          0x6
 #define MIPS_INS_BLEZL_CUSTOM         0x16
+#define MIPS_INS_BLTZ_CUSTOM          0x0
+#define MIPS_INS_BLTZAL_CUSTOM        0x10
+#define MIPS_INS_BLTZALL_CUSTOM       0x12
+#define MIPS_INS_BLTZL_CUSTOM         0x2
+#define MIPS_INS_BNE_CUSTOM           0x5
+#define MIPS_INS_BNEL_CUSTOM          0x15
+#define MIPS_INS_BREAK_CUSTOM         0xd
+#define MIPS_INS_CACHE_CUSTOM         0x1f
+#define MIPS_INS_CEIL_W_CUSTOM        0xe
+#define MIPS_INS_CFC1_CUSTOM          0x2
+#define MIPS_INS_CFC2_CUSTOM          0x2
+#define MIPS_INS_CLO_CUSTOM           0x21
+#define MIPS_INS_CLZ_CUSTOM           0x20
+#define MIPS_INS_CTC1_CUSTOM          0x6
+#define MIPS_INS_CTC2_CUSTOM          0x6
+#define MIPS_INS_CVT_D_D_CUSTOM       0x21
+#define MIPS_INS_CVT_S_D_CUSTOM       0x20
+#define MIPS_INS_CVT_W_D_CUSTOM       0x24
+#define MIPS_INS_DERET_CUSTOM         0x1f
+#define MIPS_INS_DIV_CUSTOM           0x1a
+#define MIPS_INS_DIV_S_CUSTOM         0x3
+#define MIPS_INS_DIVU_CUSTOM          0x1b
+#define MIPS_INS_ERET_CUSTOM          0x18
+#define MIPS_INS_FLOOR_W_CUSTOM       0xf
+#define MIPS_INS_J_CUSTOM             0x2
+#define MIPS_INS_LB_CUSTOM            0x20
+#define MIPS_INS_LBU_CUSTOM           0x24
+#define MIPS_INS_LDC1_CUSTOM          0x35
+#define MIPS_INS_LDC2_CUSTOM          0x36
+#define MIPS_INS_LH_CUSTOM            0x21
+#define MIPS_INS_LHU_CUSTOM           0x25
+#define MIPS_INS_LL_CUSTOM            0x30
+#define MIPS_INS_LWC1_CUSTOM          0x31
+#define MIPS_INS_LWC2_CUSTOM          0x32
+#define MIPS_INS_LWL_CUSTOM           0x22
+#define MIPS_INS_LWR_CUSTOM           0x26
+#define MIPS_INS_MADD_CUSTOM          0x0
+#define MIPS_INS_MADDU_CUSTOM         0x1
+#define MIPS_INS_MFC0_CUSTOM          0x0
+#define MIPS_INS_MFC1_CUSTOM          0x0
+#define MIPS_INS_MFC2_CUSTOM          0x0
+#define MIPS_INS_MFHI_CUSTOM          0x10
+#define MIPS_INS_MFLO_CUSTOM          0x12
+#define MIPS_INS_MOV_S_CUSTOM         0x6
+#define MIPS_INS_MOVF_CUSTOM          0x1
+#define MIPS_INS_MOVF_S_CUSTOM        0x11
+#define MIPS_INS_MOVN_CUSTOM          0xb
+#define MIPS_INS_MOVN_S_CUSTOM        0x13
+#define MIPS_INS_MOVT_CUSTOM          0x1
+#define MIPS_INS_MOVT_S_CUSTOM        0x11
+#define MIPS_INS_MOVZ_CUSTOM          0xa
+#define MIPS_INS_MOVZ_S_CUSTOM        0x12
+#define MIPS_INS_MSUB_CUSTOM          0x4
+#define MIPS_INS_MSUBU_CUSTOM         0x5
+#define MIPS_INS_MTC0_CUSTOM          0x4
+#define MIPS_INS_MTC1_CUSTOM          0x4
+#define MIPS_INS_MTC2_CUSTOM          0x4
+#define MIPS_INS_MTHI_CUSTOM          0x11
+#define MIPS_INS_MTLO_CUSTOM          0x13
+#define MIPS_INS_MUL_CUSTOM           0x2
+#define MIPS_INS_MUL_S_CUSTOM         0x2
+#define MIPS_INS_MULT_CUSTOM          0x18
+#define MIPS_INS_MULTU_CUSTOM         0x19
+#define MIPS_INS_NEG_CUSTOM           0x7
+#define MIPS_INS_NOR_CUSTOM           0x27
+#define MIPS_INS_ORI_CUSTOM           0xd
+#define MIPS_INS_PREF_CUSTOM          0x33
+#define MIPS_INS_ROUND_W_S_CUSTOM     0xc
+#define MIPS_INS_SB_CUSTOM            0x28
+#define MIPS_INS_SC_CUSTOM            0x38
+#define MIPS_INS_SDBBP_CUSTOM         0x3f
+#define MIPS_INS_SDC1_CUSTOM          0x3d
+#define MIPS_INS_SDC2_CUSTOM          0x3e
+#define MIPS_INS_SH_CUSTOM            0x29
+#define MIPS_INS_SLL_CUSTOM           0x0
+#define MIPS_INS_SLLV_CUSTOM          0x4
+#define MIPS_INS_SLT_CUSTOM           0x2a
+#define MIPS_INS_SLTI_CUSTOM          0xa
+#define MIPS_INS_SLTIU_CUSTOM         0xb
+#define MIPS_INS_SLTU_CUSTOM          0x2b
+#define MIPS_INS_SQRT_S_CUSTOM        0x4
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
@@ -209,7 +291,8 @@ struct mips32_operators {
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BGTZ_CUSTOM, "bgtz", mips32_operate_bgtz, 3, 7, FIRST },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BGTZL_CUSTOM, "bgtzl", mips32_operate_bgtzl, 3, 7, FIRST },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BLEZ_CUSTOM, "blez", mips32_operate_blez, 3, 7, FIRST },
-	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BLEZL_CUSTOM, "blezl", mips32_operate_blezl, 3, 7, FIRST }
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BLEZL_CUSTOM, "blezl", mips32_operate_blezl, 3, 7, FIRST },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZ_CUSTOM, "bltz", mips32_operate_bltz, 2, BOTH }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
