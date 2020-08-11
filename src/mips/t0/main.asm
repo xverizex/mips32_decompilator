@@ -8,7 +8,7 @@
 .text
 
 main:
-	c.le.d $f0, $f2
+	cache 0x3, 0xa($sp)
 
 loop:
 	jr $ra

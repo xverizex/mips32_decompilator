@@ -1029,6 +1029,41 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 
 			 }
 			 break;
+		case 16: {
+				 unsigned int base = get_info_op ( op, 21, 25 );
+				 unsigned int op = get_info_op ( op, 16, 20 );
+				 unsigned int offset = get_info_op ( op, 0, 15 );
+
+				 if ( dialog == PRINT )
+				 printf ( "%s %s, %s(%s) - ; не понял что такое op", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ),
+						 colored_num ( op, COLOR_NUMBER, 2 ),
+						 colored_num ( offset, COLOR_NUMBER, 3 ),
+						 colored_string ( get_name_register ( base ), COLOR_REGISTER, 4 )
+							 );
+
+				 if ( dialog == PRINT )
+				 printf ( "\n" );
+						 
+
+			 }
+			 break;
+		case 17: {
+				 unsigned int fmt = get_info_op ( op, 21, 25 );
+				 unsigned int zero = get_info_op ( op, 16, 20 );
+				 unsigned int fs = get_info_op ( op, 11, 15 );
+				 unsigned int fd = get_info_op ( op, 6, 10 );
+
+				 if ( dialog == PRINT )
+				 printf ( "%s%s %s, %s", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ),
+						 colored_string ( get_fmt_string ( fmt ), COLOR_OPERATE, 2 ),
+						 colored_string ( get_name_register_fmt ( fd ), COLOR_REGISTER, 3 ),
+						 colored_string ( get_name_register_fmt ( fs ), COLOR_REGISTER, 4 )
+					);
+
+				 if ( dialog == PRINT )
+				 printf ( "\n" );
+			 }
+			 break;
 	}
 }
 

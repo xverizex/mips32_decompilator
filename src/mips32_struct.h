@@ -106,6 +106,20 @@
  * 	6     a
  * 	5-4   fc
  * 	3-0   cond
+ *
+ * 16.
+ * 	31-26 operate
+ * 	25-21 base
+ * 	20-16 op
+ * 	15-0  offset
+ *
+ * 17.
+ * 	31-26 cop1
+ * 	25-21 fmt
+ * 	20-16 zero
+ * 	15-11 fs
+ * 	10-6  fd
+ * 	5-0   operate
  */
 #include "mips32_registers.h"
 
@@ -483,7 +497,9 @@ struct mips32_operators {
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNE_CUSTOM, "bne", mips32_operate_bne, 3, 7, BOTH },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNEL_CUSTOM, "bnel", mips32_operate_bnel, 3, 7, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_BREAK_CUSTOM, "break", mips32_operate_break, 0, 14, BOTH },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_CONDITION_CUSTOM, "c", mips32_operate_c_cond, 2, 15, ONLY_COP1 }
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CONDITION_CUSTOM, "c", mips32_operate_c_cond, 2, 15, ONLY_COP1 },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_CACHE_CUSTOM, "cache", mips32_operate_cache, 3, 16, FIRST },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CEIL_W_CUSTOM, "ceil.w", mips32_operate_ceil_w, 2, 17, BOTH }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
