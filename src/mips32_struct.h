@@ -90,12 +90,28 @@
  * 	17    nd
  * 	16    tf
  * 	15-0  offset
+ *
+ * 14.
+ * 	31-26 special
+ * 	25-6  code
+ * 	5-0   operate
+ *
+ * 15.
+ * 	31-26 special
+ * 	25-21 fmt
+ * 	20-16 ft
+ * 	15-11 fs
+ * 	10-8  cc
+ * 	7     0
+ * 	6     a
+ * 	5-4   fc
+ * 	3-0   cond
  */
 #include "mips32_registers.h"
 
 void mips32_operate_add ( struct mips32_registers *mr, short static_number, int );
-void mips32_operate_abs_s ( struct mips32_registers *mr, short static_number, int );
-void mips32_operate_add_s ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_abs_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_add_fmt ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_addi ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_sw ( struct mips32_registers *mr, short static_number, int );
@@ -242,6 +258,7 @@ void mips32_operate_xori ( struct mips32_registers *mr, short static_number, int
 #define FIRST        0
 #define LAST         1
 #define BOTH         2
+#define ONLY_COP1    3
 
 #define MIPS_NONE_SPECIAL_CUSTOM      0xfffff
 #define MIPS_SPECIAL_CUSTOM           0x0
@@ -394,12 +411,28 @@ void mips32_operate_xori ( struct mips32_registers *mr, short static_number, int
 #define MIPS_INS_WAIT_CUSTOM          0x20
 #define MIPS_INS_XOR_CUSTOM           0x26
 #define MIPS_INS_XORI_CUSTOM          0xe
+#define MIPS_INS_CONDITION_CUSTOM     0x0
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
 	MIPS_COP1_CUSTOM,
 	MIPS_COP2_CUSTOM
 };
+
+enum {
+	FMT_D = 0x11,
+	FMT_S = 0x10
+};
+
+struct fmt {
+	unsigned int type;
+	char name[255];
+} fmt_struct[] = {
+	{ FMT_D, "d" },
+	{ FMT_S, "s" }
+};
+
+const int fmt_count = sizeof ( fmt_struct ) / sizeof ( struct fmt );
 
 int both_count = sizeof ( both ) / sizeof ( int );
 
@@ -413,9 +446,9 @@ struct mips32_operators {
 	unsigned int check;
 } mips32_op[] = {
 	{ 0, MIPS_INS_INVALID, "invalid", 0, 0, 0, 0 },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_ABS_FMT_CUSTOM, "abs.s", mips32_operate_abs_s, 2, 1, BOTH },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_ABS_FMT_CUSTOM, "abs", mips32_operate_abs_fmt, 2, 1, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_ADD_CUSTOM, "add", mips32_operate_add, 3, 2, BOTH },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_ADD_FMT_CUSTOM, "add.s", mips32_operate_add_s, 3, 3, BOTH },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_ADD_FMT_CUSTOM, "add.", mips32_operate_add_fmt, 3, 3, BOTH },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_ADDI_CUSTOM, "addi", mips32_operate_addi, 3, 4, FIRST },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_ADDIU_CUSTOM, "addiu", mips32_operate_addiu, 3, 4, FIRST },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_SW_CUSTOM, "sw", mips32_operate_sw, 3, 5, FIRST },
@@ -442,7 +475,15 @@ struct mips32_operators {
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BGTZL_CUSTOM, "bgtzl", mips32_operate_bgtzl, 3, 7, FIRST },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BLEZ_CUSTOM, "blez", mips32_operate_blez, 3, 7, FIRST },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BLEZL_CUSTOM, "blezl", mips32_operate_blezl, 3, 7, FIRST },
-	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZ_CUSTOM, "bltz", mips32_operate_bltz, 2, BOTH }
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZ_CUSTOM, "bltz", mips32_operate_bltz, 2, 11, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BEQL_CUSTOM, "beql", mips32_operate_beql, 3, 4, FIRST },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZAL_CUSTOM, "bltzal", mips32_operate_bltzal, 2, 11, BOTH },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZALL_CUSTOM, "bltzall", mips32_operate_bltzall, 2, 11, BOTH },
+	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZL_CUSTOM, "bltzl", mips32_operate_bltzl, 2, 11, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNE_CUSTOM, "bne", mips32_operate_bne, 3, 7, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNEL_CUSTOM, "bnel", mips32_operate_bnel, 3, 7, BOTH },
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_BREAK_CUSTOM, "break", mips32_operate_break, 0, 14, BOTH },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CONDITION_CUSTOM, "c", mips32_operate_c_cond, 2, 15, ONLY_COP1 }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
@@ -487,5 +528,52 @@ struct mips32_cpu {
 	{ MIPS_REG_RA_CUSTOM, "ra" }
 };
 
+struct mips32_cpu cpuf[] = {
+	{ MIPS_REG_F0_CUSTOM, "f0" },
+	{ MIPS_REG_F1_CUSTOM, "f1" },
+	{ MIPS_REG_F2_CUSTOM, "f2" },
+	{ MIPS_REG_F3_CUSTOM, "f3" },
+	{ MIPS_REG_F4_CUSTOM, "f4" },
+	{ MIPS_REG_F5_CUSTOM, "f5" },
+	{ MIPS_REG_F6_CUSTOM, "f6" },
+	{ MIPS_REG_F7_CUSTOM, "f7" },
+	{ MIPS_REG_F8_CUSTOM, "f8" },
+	{ MIPS_REG_F9_CUSTOM, "f9" },
+	{ MIPS_REG_F10_CUSTOM, "f10" },
+	{ MIPS_REG_F11_CUSTOM, "f11" },
+	{ MIPS_REG_F12_CUSTOM, "f12" },
+	{ MIPS_REG_F13_CUSTOM, "f13" },
+	{ MIPS_REG_F14_CUSTOM, "f14" },
+	{ MIPS_REG_F15_CUSTOM, "f15" },
+	{ MIPS_REG_F16_CUSTOM, "f16" },
+	{ MIPS_REG_F17_CUSTOM, "f17" },
+	{ MIPS_REG_F18_CUSTOM, "f18" },
+	{ MIPS_REG_F19_CUSTOM, "f19" },
+	{ MIPS_REG_F20_CUSTOM, "f20" },
+	{ MIPS_REG_F21_CUSTOM, "f21" },
+	{ MIPS_REG_F22_CUSTOM, "f22" },
+	{ MIPS_REG_F23_CUSTOM, "f23" },
+	{ MIPS_REG_F24_CUSTOM, "f24" },
+	{ MIPS_REG_F25_CUSTOM, "f25" },
+	{ MIPS_REG_F26_CUSTOM, "f26" },
+	{ MIPS_REG_F27_CUSTOM, "f27" },
+	{ MIPS_REG_F28_CUSTOM, "f28" },
+	{ MIPS_REG_F29_CUSTOM, "f29" },
+	{ MIPS_REG_F30_CUSTOM, "f30" },
+	{ MIPS_REG_F31_CUSTOM, "f31" }
+};
+
 const int mips32_cpu_count = sizeof ( cpu ) / sizeof ( struct mips32_cpu );
+const int mips32_cpuf_count = sizeof ( cpuf ) / sizeof ( struct mips32_cpu );
+
+struct condition {
+	unsigned int type;
+	char name[255];
+} condition[] = {
+	{ MIPS_CONDITION_LT_CUSTOM, "lt" },
+	{ MIPS_CONDITION_EQ_CUSTOM, "eq" },
+	{ MIPS_CONDITION_LE_CUSTOM, "le" }
+};
+
+const int mips32_cond_count = sizeof ( condition ) / sizeof ( struct condition );
 #endif

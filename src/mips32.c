@@ -48,6 +48,7 @@ int switch_gp_offset;
 int switch_pfaf_num;
 int switch_pff;
 int stage_gp;
+int global_dialog;
 
 char temp_buffer[255];
 
@@ -67,7 +68,7 @@ static struct mips32_regs {
 #define COLOR_LOAD_SAVE        0x6
 #define COLOR_FUNCTION         COLOR_BE
 
-char current_buffer[5][255];
+char current_buffer[8][255];
 
 char **stack;
 int stack_index;
@@ -157,7 +158,7 @@ static void print_comment_function ( const unsigned int pp, unsigned int offset 
 static void mips32_cpuc_set_register ( unsigned int reg, unsigned int number ) {
 }
 
-void mips32_operate_abs_s ( struct mips32_registers *mr, short static_number, int sec_num ) {
+void mips32_operate_abs_fmt ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
 void mips32_operate_add ( struct mips32_registers *mr, short static_number, int sec_num ) {
@@ -177,7 +178,7 @@ void mips32_operate_add ( struct mips32_registers *mr, short static_number, int 
 	}
 }
 
-void mips32_operate_add_s ( struct mips32_registers *mr, short static_number, int sec_num ) {
+void mips32_operate_add_fmt ( struct mips32_registers *mr, short static_number, int sec_num ) {
 }
 
 void mips32_operate_addi ( struct mips32_registers *mr, short static_number, int sec_num ) {
@@ -202,25 +203,30 @@ void mips32_operate_andi ( struct mips32_registers *mr, short static_number, int
 
 void mips32_cop2_operate_bc ( struct mips32_registers *mr, short static_number, int sec_num ) {
 	unsigned int offset = ( unsigned int ) ( (unsigned int ) static_number << 2 );
+	offset += global_pointer + 4;
 	if ( mr->nd == 0 && mr->tf == 0 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc2f", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
 		       );
 	}
 	if ( mr->nd == 1 && mr->tf == 0 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc2fl", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
 		       );
 	}
 	if ( mr->nd == 0 && mr->tf == 1 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc2t", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
 		       );
 	}
 	if ( mr->nd == 1 && mr->tf == 1 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc2tl", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
@@ -229,25 +235,30 @@ void mips32_cop2_operate_bc ( struct mips32_registers *mr, short static_number, 
 }
 void mips32_cop1_operate_bc ( struct mips32_registers *mr, short static_number, int sec_num ) {
 	unsigned int offset = ( unsigned int ) ( (unsigned int ) static_number << 2 );
+	offset += global_pointer + 4;
 	if ( mr->nd == 0 && mr->tf == 0 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc1f", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
 		       );
 	}
 	if ( mr->nd == 1 && mr->tf == 0 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc1fl", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
 		       );
 	}
 	if ( mr->nd == 0 && mr->tf == 1 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc1t", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
 		       );
 	}
 	if ( mr->nd == 1 && mr->tf == 1 ) {
+		if ( global_dialog == PRINT )
 		printf ( "%s %s, %s", colored_string ( "bc1tl", COLOR_OPERATE, 1 ),
 				colored_num ( mr->cc, COLOR_NUMBER, 2 ),
 				colored_num ( offset, COLOR_NUMBER, 3 )
@@ -677,6 +688,13 @@ static unsigned int get_info_op ( unsigned int op, int start, int end ) {
 	return num;
 }
 
+static int get_index_op_cop1_cond ( const int operate, unsigned int o ) {
+	for ( int i = 0; i < mips32_ops_count; i++ ) {
+		if ( mips32_op[i].check == ONLY_COP1 && mips32_op[i].o == o )
+			return i;
+	}
+	return -1;
+}
 static int get_index_op_cop_2 ( const int operate, unsigned int o ) {
 	for ( int i = 0; i < mips32_ops_count; i++ ) {
 		if ( mips32_op[i].check == BOTH && mips32_op[i].o == o )
@@ -708,12 +726,57 @@ static char *get_name_register ( const unsigned int reg ) {
 	}
 	return NULL;
 }
+static char *get_name_register_fmt ( const unsigned int reg ) {
+	for ( int i = 0; i < mips32_cpuf_count; i++ ) {
+		if ( cpuf[i].r == reg ) { 
+			return cpuf[i].name;
+		}
+	}
+	return NULL;
+}
 
-static void scheme ( const int index, const int op, const unsigned int pointer, int dialog ) {
+static char *get_fmt_string ( const unsigned int fmt ) {
+	for ( int i = 0; i < fmt_count; i++ ) {
+		if ( fmt_struct[i].type == fmt ) return fmt_struct[i].name;
+	}
+	return "";
+}
+
+static unsigned int check_condition ( const unsigned int cond ) {
+	for ( int i = 0; i < mips32_cond_count; i++ ) {
+		if ( condition[i].type == cond ) return 1;
+	}
+	return 0;
+}
+static char *get_condition ( const unsigned int cond ) {
+	for ( int i = 0; i < mips32_cond_count; i++ ) {
+		if ( condition[i].type == cond ) return condition[i].name;
+	}
+	return "";
+}
+
+#define CONDITION              1
+#define NO_CONDITION           2
+
+
+static void scheme ( const int index, const int op, const unsigned int pointer, int dialog, int cond ) {
 	struct mips32_registers mr;
 
-	switch ( mips32_op[index].scheme ) {
+	switch ( index > 0 ? mips32_op[index].scheme : 15 ) {
 		case 1: {
+				unsigned int fmt = get_info_op ( op, 21, 25 );
+				unsigned int fs = get_info_op ( op, 11, 15 );
+				unsigned int fd = get_info_op ( op, 6, 10 );
+
+				if ( dialog == PRINT )
+				printf ( "%s%s %s, %s", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ),
+						colored_string ( get_fmt_string ( fmt ), COLOR_OPERATE, 2 ),
+						colored_string ( get_name_register_fmt ( fd ), COLOR_REGISTER, 3 ),
+						colored_string ( get_name_register_fmt ( fs ), COLOR_REGISTER, 4 )
+				       );
+
+				if ( dialog == PRINT )
+				printf ( "\n" );
 			}
 			break;
 		case 2: {
@@ -743,6 +806,19 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 			}
 			break;
 		case 3: {
+				unsigned int fmt = get_info_op ( op, 21, 25 );
+				unsigned int ft = get_info_op ( op, 16, 20 );
+				unsigned int fs = get_info_op ( op, 11, 15 );
+				unsigned int fd = get_info_op ( op, 6, 10 );
+
+				printf ( "%s%s %s, %s, %s", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ),
+						colored_string ( get_fmt_string ( fmt ), COLOR_OPERATE, 2 ),
+						colored_string ( get_name_register_fmt ( fd ), COLOR_REGISTER, 3 ),
+						colored_string ( get_name_register_fmt ( fs ), COLOR_REGISTER, 4 ),
+						colored_string ( get_name_register_fmt ( ft ), COLOR_REGISTER, 5 )
+				       );
+
+				printf ( "\n" );
 			}
 			break;
 		case 4: {
@@ -920,7 +996,37 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 				 mr.tf = tf;
 				 mips32_op[index].operate ( &mr, offset, 0 );
 
+				 if ( dialog == PRINT )
 				 printf ( "\n" );
+			 }
+			 break;
+		case 14: {
+				 if ( dialog == PRINT )
+				 printf ( "%s", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ) );
+
+				 if ( dialog == PRINT )
+				 printf ( "\n" );
+			 }
+			 break;
+		case 15: {
+				 unsigned int cond = get_info_op ( op, 0, 3 );
+				 unsigned int fmt = get_info_op ( op, 21, 25 );
+				 unsigned int fs = get_info_op ( op, 11, 15 );
+				 unsigned int ft = get_info_op ( op, 16, 20 );
+
+				 if ( check_condition ( cond ) )
+				 if ( dialog == PRINT )
+				 printf ( "%s.%s.%s %s %s", colored_string ( "c", COLOR_OPERATE, 1 ),
+						 colored_string ( get_condition ( cond ), COLOR_OPERATE, 2 ),
+						 colored_string ( get_fmt_string ( fmt ), COLOR_OPERATE, 3 ),
+						 colored_string ( get_name_register_fmt ( fs ), COLOR_REGISTER, 4 ),
+						 colored_string ( get_name_register_fmt ( ft ), COLOR_REGISTER, 5 )
+					);
+
+				 if ( check_condition ( cond ) )
+				 if ( dialog == PRINT )
+				 printf ( "\n" );
+
 			 }
 			 break;
 	}
@@ -959,7 +1065,7 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 							exit ( EXIT_FAILURE );
 #endif
 						 }
-						 scheme ( index, op, pointer, dialog );
+						 scheme ( index, op, pointer, dialog, NO_CONDITION );
 					 }
 					 break;
 		case MIPS_SPECIAL_CUSTOM: {
@@ -970,21 +1076,29 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 							  exit ( EXIT_FAILURE );
 #endif
 						  }
-						  scheme ( index, op, pointer, dialog );
+						  scheme ( index, op, pointer, dialog, NO_CONDITION );
 					  }
 					  break;
 		case MIPS_COP1_CUSTOM: {
 					       unsigned short operate = get_info_op ( op, 21, 25 );
 					       int index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM );
+					       if ( index == -1 ) {
+						       operate = get_info_op ( op, 0, 5 );
+					       	       index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM );
+					       }
+					       if ( index == -1 && get_index_op_cop1_cond ( op, MIPS_COP1_CUSTOM ) ) {
+						       scheme ( -1, op, pointer, dialog, CONDITION );
+						       break;
+					       }
 
-					       scheme ( index, op, pointer, dialog );
+					       scheme ( index, op, pointer, dialog, NO_CONDITION );
 				       }
 				       break;
 		case MIPS_COP2_CUSTOM: {
 					       unsigned short operate = get_info_op ( op, 21, 25 );
 					       int index = get_index_op_cop_2 ( operate, MIPS_COP2_CUSTOM );
 
-					       scheme ( index, op, pointer, dialog );
+					       scheme ( index, op, pointer, dialog, NO_CONDITION );
 				       }
 				       break;
 		default: {
@@ -995,7 +1109,7 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 					 exit ( EXIT_FAILURE );
 				 }
 #endif
-				 scheme ( index, op, pointer, dialog );
+				 scheme ( index, op, pointer, dialog, NO_CONDITION );
 			 }
 			 break;
 				
@@ -1170,7 +1284,7 @@ static void exec_pfa ( char *param ) {
 		offset |= sect.offset[index_section_text].addr & 0xffff0000;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		global_pointer = pointer;
-		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		parse_operation ( xchange ( *operation ), pointer, global_dialog = NO_PRINT );
 		pointer += 4;
 	}
 	global_print = 1;
@@ -1193,7 +1307,7 @@ static void exec_pff ( char *param ) {
 		offset |= sect.offset[index_section_text].addr & 0xffff0000;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		global_pointer = pointer;
-		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		parse_operation ( xchange ( *operation ), pointer, global_dialog = NO_PRINT );
 		if ( !switch_pff ) break;
 		pointer += 4;
 	}
@@ -1212,7 +1326,7 @@ static void get_gp_offset ( ) {
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		//printf ( "%s: ", colored_num ( pointer, COLOR_ADDRESS, 0 ) );
 		global_pointer = pointer;
-		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		parse_operation ( xchange ( *operation ), pointer, global_dialog = NO_PRINT );
 		pointer += 4;
 		if ( !switch_gp_offset ) break;
 	}
@@ -1233,7 +1347,7 @@ static int exec_pfaf_num ( unsigned int num ) {
 		offset |= sect.offset[index_section_text].addr & 0xffff0000;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		global_pfaf_num_pointer = pointer;
-		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		parse_operation ( xchange ( *operation ), pointer, global_dialog = NO_PRINT );
 		pointer -= 4;
 		if ( global_pfaf_found ) {
 			global_pfaf_found = 0;
@@ -1263,7 +1377,7 @@ static int exec_pfaf ( char *param ) {
 		offset |= sect.offset[index_section_text].addr & 0xffff0000;
 		const unsigned int *operation = ( const unsigned int * ) ( global_file_buffer + offset );
 		global_pointer = pointer;
-		parse_operation ( xchange ( *operation ), pointer, NO_PRINT );
+		parse_operation ( xchange ( *operation ), pointer, global_dialog = NO_PRINT );
 		pointer -= 4;
 		if ( global_pfaf_found ) {
 			global_print = 1;
@@ -1372,7 +1486,7 @@ static void parse_buf ( char *b ) {
 static void decompile ( const char * const program_buffer, const int size_of_section_code ) {
 	const int end_address = address + size_of_section_code;
 	global_file_buffer = program_buffer;
-	get_gp_offset ( );
+	//get_gp_offset ( );
 	char buf[255];
 
 	while ( 1 ) {
@@ -1440,9 +1554,9 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 	       strncpy ( sect.offset[index].name, name, strlen ( name ) );
 	       sect.offset[index].addr = xchange ( section_header->sh_offset );
 	       sect.offset[index].vaddr = xchange ( section_header->sh_addr );
-#if 0
+#if 1
 		if ( xchange ( section_header->sh_type ) == SHT_SYMTAB ) {
-			section_sym = section_header;
+			if ( !section_sym ) section_sym = section_header;
 			printf ( "symtab:\n" );
 		}
 #endif
@@ -1451,9 +1565,9 @@ void mips32_exec ( const Elf32_Ehdr * const program_header, const char * const p
 			section_code = section_header;
 			size_of_section_code = xchange ( section_code->sh_size );
 		}
-#if 0
+#if 1
 		if ( !strncmp ( name, ".strtab", 8 ) ) {
-			str_table = section_header;
+			if ( !str_table ) str_table = section_header;
 		}
 #endif
 		if ( !strncmp ( name, ".dynsym", 8 ) ) {

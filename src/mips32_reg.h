@@ -32,4 +32,41 @@
 #define MIPS_REG_SP_CUSTOM          29
 #define MIPS_REG_FP_CUSTOM          30
 #define MIPS_REG_RA_CUSTOM          31
+
+#define MIPS_REG_F0_CUSTOM           0
+#define MIPS_REG_F1_CUSTOM           1
+#define MIPS_REG_F2_CUSTOM           2
+#define MIPS_REG_F3_CUSTOM           3
+#define MIPS_REG_F4_CUSTOM           4
+#define MIPS_REG_F5_CUSTOM           5
+#define MIPS_REG_F6_CUSTOM           6
+#define MIPS_REG_F7_CUSTOM           7
+#define MIPS_REG_F8_CUSTOM           8
+#define MIPS_REG_F9_CUSTOM           9
+#define MIPS_REG_F10_CUSTOM         10 
+#define MIPS_REG_F11_CUSTOM         11
+#define MIPS_REG_F12_CUSTOM         12
+#define MIPS_REG_F13_CUSTOM         13
+#define MIPS_REG_F14_CUSTOM         14
+#define MIPS_REG_F15_CUSTOM         15
+#define MIPS_REG_F16_CUSTOM         16
+#define MIPS_REG_F17_CUSTOM         17
+#define MIPS_REG_F18_CUSTOM         18
+#define MIPS_REG_F19_CUSTOM         19
+#define MIPS_REG_F20_CUSTOM         20
+#define MIPS_REG_F21_CUSTOM         21
+#define MIPS_REG_F22_CUSTOM         22
+#define MIPS_REG_F23_CUSTOM         23
+#define MIPS_REG_F24_CUSTOM         24
+#define MIPS_REG_F25_CUSTOM         25
+#define MIPS_REG_F26_CUSTOM         26
+#define MIPS_REG_F27_CUSTOM         27
+#define MIPS_REG_F28_CUSTOM         28
+#define MIPS_REG_F29_CUSTOM         29
+#define MIPS_REG_F30_CUSTOM         30
+#define MIPS_REG_F31_CUSTOM         31
+
+#define MIPS_CONDITION_LT_CUSTOM    0xc
+#define MIPS_CONDITION_LE_CUSTOM    0xe
+#define MIPS_CONDITION_EQ_CUSTOM    0x2
 #endif
