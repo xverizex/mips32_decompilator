@@ -410,6 +410,238 @@ void mips32_operate_addu ( struct mips32_registers *mr, short static_number, int
 	}
 }
 
+void mips32_operate_bltz ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_bltzal ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_bltzall ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_bltzl ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_bne ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_bnel ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_break ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_c_cond ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_cache ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ceil_w ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_cfc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_cfc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_clo ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_clz ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_cop2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ctc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ctc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_cvt_d ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_cvt_s ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_cvt_w ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_deret ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_div ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_div_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_divu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_eret ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_floor_w_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_j ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lb ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lbu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ldc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ldc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lh ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lhu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ll ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lwc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lwc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lwl ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_lwr ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_madd ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_maddu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mfc0 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mfc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mfc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mfhi ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mflo ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mov_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movf ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movf_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movn ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movn_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movt_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movz ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_movz_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_msub ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_msubu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mtc0 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mtc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mtc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mthi ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mtlo ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mul ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mul_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_mult ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_multu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_neg_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_nor ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ori ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_pref ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_round_w ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sb ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sc ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sdbbp ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sdc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sdc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sh ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sll ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sllv ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_slt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sltiu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sltu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sqrt_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sra ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_srav ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_srl ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_srlv ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_ssnop ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sub ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sub_fmt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_subu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_swc1 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_swc2 ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_swl ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_swr ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_sync ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_syscall ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_teq ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_teqi ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tge ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tgei ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tgeiu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tgeu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tlbp ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tlbr ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tlbwi ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tlbwr ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tlt ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tlti ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tltiu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tltu ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tne ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_tnei ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_trunc_w ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_wait ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_xor ( struct mips32_registers *mr, short static_number, int num ) {
+}
+void mips32_operate_xori ( struct mips32_registers *mr, short static_number, int num ) {
+}
 
 static unsigned int found_bool_sym_name ( const char * const name, const int type ) {
 	for ( int i = 0; i < sym.count; i++ ) {

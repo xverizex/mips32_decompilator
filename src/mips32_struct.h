@@ -102,7 +102,6 @@ void mips32_operate_sw ( struct mips32_registers *mr, short static_number, int )
 void mips32_operate_or ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_lui ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int );
-void mips32_operate_slti ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_beq ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_nop ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_jalr ( struct mips32_registers *mr, short static_number, int );
@@ -122,6 +121,123 @@ void mips32_operate_bgtz ( struct mips32_registers *mr, short static_number, int
 void mips32_operate_bgtzl ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_blez ( struct mips32_registers *mr, short static_number, int );
 void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bltz ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bltzal ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bltzall ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bltzl ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bne ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_bnel ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_break ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_c_cond ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_cache ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ceil_w ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_cfc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_cfc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_clo ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_clz ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_cop2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ctc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ctc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_cvt_d ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_cvt_s ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_cvt_w ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_deret ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_div ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_div_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_divu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_eret ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_floor_w_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_j ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lb ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lbu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ldc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ldc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lh ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lhu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ll ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lwc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lwc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lwl ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_lwr ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_madd ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_maddu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mfc0 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mfc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mfc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mfhi ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mflo ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mov_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movf ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movf_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movn ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movn_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movt_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movz ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_movz_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_msub ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_msubu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mtc0 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mtc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mtc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mthi ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mtlo ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mul ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mul_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_mult ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_multu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_neg_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_nor ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ori ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_pref ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_round_w ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sb ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sc ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sdbbp ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sdc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sdc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sh ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sll ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sllv ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_slt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_slti ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sltiu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sltu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sqrt_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sra ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_srav ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_srl ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_srlv ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_ssnop ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sub ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sub_fmt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_subu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_swc1 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_swc2 ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_swl ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_swr ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_sync ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_syscall ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_teq ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_teqi ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tge ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tgei ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tgeiu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tgeu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tlbp ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tlbr ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tlbwi ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tlbwr ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tlt ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tlti ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tltiu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tltu ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tne ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_tnei ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_trunc_w ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_wait ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_xor ( struct mips32_registers *mr, short static_number, int );
+void mips32_operate_xori ( struct mips32_registers *mr, short static_number, int );
 
 #define FIRST        0
 #define LAST         1
@@ -134,7 +250,7 @@ void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, in
 #define MIPS_COP1_CUSTOM              0x11
 #define MIPS_COP2_CUSTOM              0x12
 #define MIPS_COP0_CUSTOM              0x10
-#define MIPS_INS_ABS_S_FMT_CUSTOM     0x5
+#define MIPS_INS_ABS_FMT_CUSTOM       0x5
 #define MIPS_INS_ADD_CUSTOM           0x20
 #define MIPS_INS_ADD_FMT_CUSTOM       0x0
 #define MIPS_INS_ADDI_CUSTOM          0x8
@@ -178,12 +294,12 @@ void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, in
 #define MIPS_INS_CLZ_CUSTOM           0x20
 #define MIPS_INS_CTC1_CUSTOM          0x6
 #define MIPS_INS_CTC2_CUSTOM          0x6
-#define MIPS_INS_CVT_D_D_CUSTOM       0x21
-#define MIPS_INS_CVT_S_D_CUSTOM       0x20
-#define MIPS_INS_CVT_W_D_CUSTOM       0x24
+#define MIPS_INS_CVT_D_FMT_CUSTOM     0x21
+#define MIPS_INS_CVT_S_FMT_CUSTOM     0x20
+#define MIPS_INS_CVT_W_FMT_CUSTOM     0x24
 #define MIPS_INS_DERET_CUSTOM         0x1f
 #define MIPS_INS_DIV_CUSTOM           0x1a
-#define MIPS_INS_DIV_S_CUSTOM         0x3
+#define MIPS_INS_DIV_FMT_CUSTOM       0x3
 #define MIPS_INS_DIVU_CUSTOM          0x1b
 #define MIPS_INS_ERET_CUSTOM          0x18
 #define MIPS_INS_FLOOR_W_CUSTOM       0xf
@@ -206,15 +322,15 @@ void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, in
 #define MIPS_INS_MFC2_CUSTOM          0x0
 #define MIPS_INS_MFHI_CUSTOM          0x10
 #define MIPS_INS_MFLO_CUSTOM          0x12
-#define MIPS_INS_MOV_S_CUSTOM         0x6
+#define MIPS_INS_MOV_FMT_CUSTOM       0x6
 #define MIPS_INS_MOVF_CUSTOM          0x1
-#define MIPS_INS_MOVF_S_CUSTOM        0x11
+#define MIPS_INS_MOVF_FMT_CUSTOM      0x11
 #define MIPS_INS_MOVN_CUSTOM          0xb
-#define MIPS_INS_MOVN_S_CUSTOM        0x13
+#define MIPS_INS_MOVN_FMT_CUSTOM      0x13
 #define MIPS_INS_MOVT_CUSTOM          0x1
-#define MIPS_INS_MOVT_S_CUSTOM        0x11
+#define MIPS_INS_MOVT_FMT_CUSTOM      0x11
 #define MIPS_INS_MOVZ_CUSTOM          0xa
-#define MIPS_INS_MOVZ_S_CUSTOM        0x12
+#define MIPS_INS_MOVZ_FMT_CUSTOM      0x12
 #define MIPS_INS_MSUB_CUSTOM          0x4
 #define MIPS_INS_MSUBU_CUSTOM         0x5
 #define MIPS_INS_MTC0_CUSTOM          0x4
@@ -223,14 +339,14 @@ void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, in
 #define MIPS_INS_MTHI_CUSTOM          0x11
 #define MIPS_INS_MTLO_CUSTOM          0x13
 #define MIPS_INS_MUL_CUSTOM           0x2
-#define MIPS_INS_MUL_S_CUSTOM         0x2
+#define MIPS_INS_MUL_FMT_CUSTOM       0x2
 #define MIPS_INS_MULT_CUSTOM          0x18
 #define MIPS_INS_MULTU_CUSTOM         0x19
 #define MIPS_INS_NEG_CUSTOM           0x7
 #define MIPS_INS_NOR_CUSTOM           0x27
 #define MIPS_INS_ORI_CUSTOM           0xd
 #define MIPS_INS_PREF_CUSTOM          0x33
-#define MIPS_INS_ROUND_W_S_CUSTOM     0xc
+#define MIPS_INS_ROUND_W_FMT_CUSTOM   0xc
 #define MIPS_INS_SB_CUSTOM            0x28
 #define MIPS_INS_SC_CUSTOM            0x38
 #define MIPS_INS_SDBBP_CUSTOM         0x3f
@@ -243,7 +359,41 @@ void mips32_operate_blezl ( struct mips32_registers *mr, short static_number, in
 #define MIPS_INS_SLTI_CUSTOM          0xa
 #define MIPS_INS_SLTIU_CUSTOM         0xb
 #define MIPS_INS_SLTU_CUSTOM          0x2b
-#define MIPS_INS_SQRT_S_CUSTOM        0x4
+#define MIPS_INS_SQRT_FMT_CUSTOM      0x4
+#define MIPS_INS_SRA_CUSTOM           0x3
+#define MIPS_INS_SRAV_CUSTOM          0x7
+#define MIPS_INS_SRL_CUSTOM           0x2
+#define MIPS_INS_SRLV_CUSTOM          0x6
+#define MIPS_INS_SLLNOP_CUSTOM        0x0
+#define MIPS_INS_SUB_CUSTOM           0x22
+#define MIPS_INS_SUB_FMT_CUSTOM       0x1
+#define MIPS_INS_SUBU_CUSTOM          0x23
+#define MIPS_INS_SWC1_CUSTOM          0x39
+#define MIPS_INS_SWC2_CUSTOM          0x3a
+#define MIPS_INS_SWL_CUSTOM           0x2a
+#define MIPS_INS_SWR_CUSTOM           0x2e
+#define MIPS_INS_SYNC_CUSTOM          0xf
+#define MIPS_INS_SYSCALL_CUSTOM       0xc
+#define MIPS_INS_TEQ_CUSTOM           0x34
+#define MIPS_INS_TEQI_CUSTOM          0xc
+#define MIPS_INS_TGE_CUSTOM           0x30
+#define MIPS_INS_TGEI_CUSTOM          0x8
+#define MIPS_INS_TGEIU_CUSTOM         0x9
+#define MIPS_INS_TGEU_CUSTOM          0x31
+#define MIPS_INS_TLBP_CUSTOM          0x8
+#define MIPS_INS_TLBR_CUSTOM          0x1
+#define MIPS_INS_TLBWI_CUSTOM         0x2
+#define MIPS_INS_TLBWR_CUSTOM         0x6
+#define MIPS_INS_TLT_CUSTOM           0x32
+#define MIPS_INS_TLTI_CUSTOM          0xa
+#define MIPS_INS_TLTIU_CUSTOM         0xb
+#define MIPS_INS_TLTU_CUSTOM          0x33
+#define MIPS_INS_TNE_CUSTOM           0x36
+#define MIPS_INS_TNEI_CUSTOM          0xe
+#define MIPS_INS_TRUNC_W_FMT_CUSTOM   0xd
+#define MIPS_INS_WAIT_CUSTOM          0x20
+#define MIPS_INS_XOR_CUSTOM           0x26
+#define MIPS_INS_XORI_CUSTOM          0xe
 
 const int both[] = {
 	MIPS_SPECIAL_CUSTOM,
@@ -263,7 +413,7 @@ struct mips32_operators {
 	unsigned int check;
 } mips32_op[] = {
 	{ 0, MIPS_INS_INVALID, "invalid", 0, 0, 0, 0 },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_ABS_S_FMT_CUSTOM, "abs.s", mips32_operate_abs_s, 2, 1, BOTH },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_ABS_FMT_CUSTOM, "abs.s", mips32_operate_abs_s, 2, 1, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_ADD_CUSTOM, "add", mips32_operate_add, 3, 2, BOTH },
 	{ MIPS_COP1_CUSTOM, MIPS_INS_ADD_FMT_CUSTOM, "add.s", mips32_operate_add_s, 3, 3, BOTH },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_ADDI_CUSTOM, "addi", mips32_operate_addi, 3, 4, FIRST },
