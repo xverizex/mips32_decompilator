@@ -8,7 +8,7 @@
 .text
 
 main:
-	cache 0x3, 0xa($sp)
+	cfc2 $v0, $cc0
 
 loop:
 	jr $ra

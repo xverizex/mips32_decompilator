@@ -120,6 +120,13 @@
  * 	15-11 fs
  * 	10-6  fd
  * 	5-0   operate
+ *
+ * 18.
+ * 	31-26 cop1
+ * 	25-21 operate
+ * 	20-16 rt
+ * 	15-11 fs
+ * 	10-0  zero
  */
 #include "mips32_registers.h"
 
@@ -273,6 +280,7 @@ void mips32_operate_xori ( struct mips32_registers *mr, short static_number, int
 #define LAST         1
 #define BOTH         2
 #define ONLY_COP1    3
+#define SECOND       4
 
 #define MIPS_NONE_SPECIAL_CUSTOM      0xfffff
 #define MIPS_SPECIAL_CUSTOM           0x0
@@ -479,8 +487,8 @@ struct mips32_operators {
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_JAL_CUSTOM, "jal", mips32_operate_jal, 1, 12, FIRST },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_ADDU_CUSTOM, "addu", mips32_operate_addu, 3, 2, BOTH },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_ANDI_CUSTOM, "andi", mips32_operate_andi, 3, 4, FIRST },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_BC_CUSTOM, "bc", mips32_cop1_operate_bc, 2, 13, BOTH },
-	{ MIPS_COP2_CUSTOM, MIPS_INS_BC_CUSTOM, "bc", mips32_cop2_operate_bc, 2, 13, BOTH },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_BC_CUSTOM, "bc", mips32_cop1_operate_bc, 2, 13, SECOND },
+	{ MIPS_COP2_CUSTOM, MIPS_INS_BC_CUSTOM, "bc", mips32_cop2_operate_bc, 2, 13, SECOND },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BEQL_CUSTOM, "beq", mips32_operate_beql, 3, 7, FIRST },
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZ_CUSTOM, "bgez", mips32_operate_bgez, 2, 11, BOTH },
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BGEZALL_CUSTOM, "bgezall", mips32_operate_bgezall, 2, 11, BOTH },
@@ -499,7 +507,8 @@ struct mips32_operators {
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_BREAK_CUSTOM, "break", mips32_operate_break, 0, 14, BOTH },
 	{ MIPS_COP1_CUSTOM, MIPS_INS_CONDITION_CUSTOM, "c", mips32_operate_c_cond, 2, 15, ONLY_COP1 },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_CACHE_CUSTOM, "cache", mips32_operate_cache, 3, 16, FIRST },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_CEIL_W_CUSTOM, "ceil.w", mips32_operate_ceil_w, 2, 17, BOTH }
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CEIL_W_CUSTOM, "ceil.w", mips32_operate_ceil_w, 2, 17, BOTH },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CFC1_CUSTOM, "cfc1", mips32_operate_cfc1, 2, 18, SECOND }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );

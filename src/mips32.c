@@ -695,9 +695,9 @@ static int get_index_op_cop1_cond ( const int operate, unsigned int o ) {
 	}
 	return -1;
 }
-static int get_index_op_cop_2 ( const int operate, unsigned int o ) {
+static int get_index_op_cop_2 ( const int operate, unsigned int o, unsigned int pos ) {
 	for ( int i = 0; i < mips32_ops_count; i++ ) {
-		if ( mips32_op[i].check == BOTH && mips32_op[i].o == o )
+		if ( mips32_op[i].check == pos && mips32_op[i].o == o )
 			if ( mips32_op[i].special == operate ) return i;
 	}
 	return -1;
@@ -1064,6 +1064,20 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 				 printf ( "\n" );
 			 }
 			 break;
+		case 18: {
+				 unsigned int rt = get_info_op ( op, 16, 20 );
+				 unsigned int fs = get_info_op ( op, 11, 15 );
+
+				 if ( dialog == PRINT )
+				 printf ( "%s %s, %s", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ),
+						 colored_string ( get_name_register ( rt ), COLOR_REGISTER, 2 ),
+						 colored_string ( get_name_register_fmt ( fs ), COLOR_REGISTER, 3 )
+					);
+
+				 if ( dialog == PRINT )
+				 printf ( "\n" );
+			 }
+			 break;
 	}
 }
 
@@ -1095,10 +1109,6 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 						 unsigned short operate = get_info_op ( op, 16, 20 );
 						 int index = get_index_op_last ( operate, MIPS_REGIMM_CUSTOM );
 						 if ( index == -1 ) {
-#if 0
-						  	printf ( "not found index\n" );
-							exit ( EXIT_FAILURE );
-#endif
 						 }
 						 scheme ( index, op, pointer, dialog, NO_CONDITION );
 					 }
@@ -1106,20 +1116,19 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 		case MIPS_SPECIAL_CUSTOM: {
 						  int index = get_index_op_last ( last, MIPS_SPECIAL_CUSTOM );
 						  if ( index == -1 ) {
-#if 0
-							  printf ( "not found index\n" );
-							  exit ( EXIT_FAILURE );
-#endif
 						  }
 						  scheme ( index, op, pointer, dialog, NO_CONDITION );
 					  }
 					  break;
 		case MIPS_COP1_CUSTOM: {
 					       unsigned short operate = get_info_op ( op, 21, 25 );
-					       int index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM );
+					       int index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM, BOTH );
+					       if ( index == -1 ) {
+						       index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM, SECOND );
+					       }
 					       if ( index == -1 ) {
 						       operate = get_info_op ( op, 0, 5 );
-					       	       index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM );
+					       	       index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM, BOTH );
 					       }
 					       if ( index == -1 && get_index_op_cop1_cond ( op, MIPS_COP1_CUSTOM ) ) {
 						       scheme ( -1, op, pointer, dialog, CONDITION );
@@ -1131,7 +1140,10 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 				       break;
 		case MIPS_COP2_CUSTOM: {
 					       unsigned short operate = get_info_op ( op, 21, 25 );
-					       int index = get_index_op_cop_2 ( operate, MIPS_COP2_CUSTOM );
+					       int index = get_index_op_cop_2 ( operate, MIPS_COP2_CUSTOM, BOTH );
+					       if ( index == -1 ) {
+						       index = get_index_op_cop_2 ( operate, MIPS_COP1_CUSTOM, SECOND );
+					       }
 
 					       scheme ( index, op, pointer, dialog, NO_CONDITION );
 				       }
@@ -1521,7 +1533,7 @@ static void parse_buf ( char *b ) {
 static void decompile ( const char * const program_buffer, const int size_of_section_code ) {
 	const int end_address = address + size_of_section_code;
 	global_file_buffer = program_buffer;
-	//get_gp_offset ( );
+	get_gp_offset ( );
 	char buf[255];
 
 	while ( 1 ) {
