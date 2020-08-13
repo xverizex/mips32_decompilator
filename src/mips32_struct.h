@@ -127,6 +127,19 @@
  * 	20-16 rt
  * 	15-11 fs
  * 	10-0  zero
+ *
+ * 19.
+ * 	31-26 cop2
+ * 	25-21 operate
+ * 	20-16 rt
+ * 	15-11 rd
+ * 	10-0  zero
+ *
+ * 20.
+ * 	31-26 cop2
+ * 	25    co == 1
+ * 	24-0  cofun
+ * 
  */
 #include "mips32_registers.h"
 
@@ -289,6 +302,7 @@ void mips32_operate_xori ( struct mips32_registers *mr, short static_number, int
 #define MIPS_COP1_CUSTOM              0x11
 #define MIPS_COP2_CUSTOM              0x12
 #define MIPS_COP0_CUSTOM              0x10
+#define MIPS_COP2_CO_CUSTOM           0xffff
 #define MIPS_INS_ABS_FMT_CUSTOM       0x5
 #define MIPS_INS_ADD_CUSTOM           0x20
 #define MIPS_INS_ADD_FMT_CUSTOM       0x0
@@ -508,7 +522,12 @@ struct mips32_operators {
 	{ MIPS_COP1_CUSTOM, MIPS_INS_CONDITION_CUSTOM, "c", mips32_operate_c_cond, 2, 15, ONLY_COP1 },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_CACHE_CUSTOM, "cache", mips32_operate_cache, 3, 16, FIRST },
 	{ MIPS_COP1_CUSTOM, MIPS_INS_CEIL_W_CUSTOM, "ceil.w", mips32_operate_ceil_w, 2, 17, BOTH },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_CFC1_CUSTOM, "cfc1", mips32_operate_cfc1, 2, 18, SECOND }
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CFC1_CUSTOM, "cfc1", mips32_operate_cfc1, 2, 18, SECOND },
+	// { MIPS_COP2_CUSTOM, MIPS_INS_CFC2_CUSTOM, "cfc2", mips32_operate_cfc2, 2, 19, SECOND },
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_CLO_CUSTOM, "clo", mips32_operate_clo, 2, 2, BOTH },
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_CLZ_CUSTOM, "clz", mips32_operate_clz, 2, 2, BOTH },
+	{ MIPS_COP2_CUSTOM, MIPS_COP2_CO_CUSTOM, "cop2", mips32_operate_cop2, 1, 20, FIRST },
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CTC1_CUSTOM, "ctc1", mips32_operate_ctc1, 2, 18, SECOND }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );

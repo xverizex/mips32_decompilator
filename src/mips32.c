@@ -118,7 +118,7 @@ static unsigned int get_address_offset ( unsigned int p ) {
 	return *ad;
 }
 
-static void print_pff ( const unsigned int pp, unsigned int offset ) {
+static void print_pff ( const unsigned int pp, unsigned int offset, unsigned int rt ) {
 	for ( int i = 0; i < sym.count; i++ ) {
 		if ( sym.offset[i].addr == offset ) {
 			if ( sym.offset[i].name[0] == 0 ) continue;
@@ -127,6 +127,13 @@ static void print_pff ( const unsigned int pp, unsigned int offset ) {
 					colored_string ( sym.offset[i].name, COLOR_FUNCTION, 2 ) );
 			return;
 		}
+	}
+	if ( rt == MIPS_REG_T9_CUSTOM ) {
+		char buf[255];
+		snprintf ( buf, 255, "func.0x%x", pp );
+		printf ( "%s: %s\n", colored_num ( global_pointer, COLOR_ADDRESS, 1 ),
+			colored_string ( buf, COLOR_ADDRESS, 2 ) 
+				);
 	}
 }
 static void print_comment_function ( const unsigned int pp, unsigned int offset ) {
@@ -147,9 +154,12 @@ static void print_comment_function ( const unsigned int pp, unsigned int offset 
 			const char *str = ( global_file_buffer + off );
 			if ( str[0] > 0 ) {
 				printf ( "; %s; ", str );
+				printf ( "func.%x", pp );
+			} else {
+				const int *n = (const int *) str;
+				printf ( "; int=%d ;", *n );
+				printf ( "func.%x", pp );
 			}
-			const int *n = (const int *) str;
-			printf ( "int=%d ", *n );
 			return;
 		}
 	}
@@ -291,7 +301,7 @@ void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, in
 	unsigned int pp = cpuc.r[mr->rt];
 	unsigned int offset_to_address = xchange ( get_address_offset ( p ) );
 	if ( switch_pff ) {
-		print_pff ( pp, offset_to_address );
+		print_pff ( pp, offset_to_address, mr->rt );
 	}
 	if ( global_print ) print_comment_function ( pp, offset_to_address );
 }
@@ -350,7 +360,7 @@ void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int s
 	cpuc.r[mr->rt] = offset_to_address;
 	if ( global_print ) print_comment_function ( pp, offset_to_address );
 	if ( switch_pff ) {
-		print_pff ( pp, offset_to_address );
+		print_pff ( pp, offset_to_address, mr->rt );
 	}
 	if ( switch_pfa ) {
 		if ( global_find_offset == offset_to_address ) {
@@ -1078,7 +1088,20 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 				 printf ( "\n" );
 			 }
 			 break;
+		case 19: {
+			 }
+			 break;
+		case 20: {
+			 }
+			 break;
 	}
+}
+
+static unsigned int get_index_for_special_code ( const unsigned int code ) {
+	for ( int i = 0; i < mips32_ops_count; i++ ) {
+		if ( mips32_op[i].special == code ) return i;
+	}
+	return -1;
 }
 
 static void dump_bit ( const unsigned int op ) {
@@ -1139,6 +1162,12 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 				       }
 				       break;
 		case MIPS_COP2_CUSTOM: {
+					       unsigned int bit_co = get_info_op_one_bit ( op, 25 );
+					       if ( bit_co == 1 ) {
+						       unsigned int index = get_index_for_special_code ( 0xffff );
+					       	       scheme ( index, op, pointer, dialog, NO_CONDITION );
+						       break;
+					       }
 					       unsigned short operate = get_info_op ( op, 21, 25 );
 					       int index = get_index_op_cop_2 ( operate, MIPS_COP2_CUSTOM, BOTH );
 					       if ( index == -1 ) {

@@ -8,7 +8,7 @@
 .text
 
 main:
-	cfc2 $v0, $cc0
+	cfc1 $t0, $f0
 
 loop:
 	jr $ra
