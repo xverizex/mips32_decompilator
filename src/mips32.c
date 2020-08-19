@@ -23,6 +23,10 @@ struct sect {
 	int count;
 } sect;
 
+static int seeks[0xff];
+static int index_seeks;
+static int border_seeks;
+
 static void exec_pfaf_n ( int );
 static void exec_pfaf_ns ( int );
 static int xchange ( int num );
@@ -1370,6 +1374,14 @@ static unsigned int get_hex_offset ( char *param ) {
 	return number;
 }
 
+static void exec_s_minus ( ) {
+	if ( index_seeks > 0 ) { address = seeks[--index_seeks]; }
+}
+
+static void exec_s_plus ( ) {
+	if ( index_seeks < border_seeks && index_seeks < 0xff ) address = seeks[++index_seeks];
+}
+
 static void exec_s ( char *param ) {
 	if ( !check_is_hex ( param ) ) {
 		printf ( "Должно быть шестнадцатеричное число.\n" );
@@ -1379,6 +1391,8 @@ static void exec_s ( char *param ) {
 
 	unsigned int offset = get_hex_offset ( param );
 	address = offset;
+	seeks[++index_seeks] = offset;
+	border_seeks = index_seeks;
 }
 
 static void exec_pf ( ) {
@@ -1643,6 +1657,14 @@ static void parse_buf ( char *b ) {
 		exec_pfe ( param );
 		return;
 	}
+	if ( !strncmp ( cmd, "s-", 3 ) ) {
+		exec_s_minus ( );
+		return;
+	}
+	if ( !strncmp ( cmd, "s+", 3 ) ) {
+		exec_s_plus ( );
+		return;
+	}
 	if ( !strncmp ( cmd, "h", 2 ) || !strncmp ( cmd, "help", 5 ) ) {
 		exec_help ( );
 		return;
@@ -1654,6 +1676,9 @@ static void decompile ( const char * const program_buffer, const int size_of_sec
 	global_file_buffer = program_buffer;
 	get_gp_offset ( );
 	char buf[255];
+
+	seeks[index_seeks] = address;
+	border_seeks = index_seeks;
 
 	while ( 1 ) {
 		printf ( "[%s]:", colored_num ( address, COLOR_ADDRESS, 0 ) );
