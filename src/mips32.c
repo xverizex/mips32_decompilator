@@ -157,7 +157,7 @@ static void print_comment_function ( const unsigned int pp, unsigned int offset 
 			unsigned int off = ( sect.offset[i].addr & 0xffff0000 ) | ( pp & 0xffff );
 			const char *str = ( global_file_buffer + off );
 			if ( str[0] > 0 ) {
-				printf ( "; %s; i=%d", str, i );
+				printf ( "; %s", str );
 				printf ( "func.%x", pp );
 			} else {
 				const int *n = (const int *) str;
@@ -758,10 +758,14 @@ static int get_index_op_first ( const int first ) {
 	return -1;
 }
 
-static int get_index_op_last ( const int last, unsigned int o ) {
+static int get_index_op_last ( const int last, unsigned int o, unsigned int operate ) {
 	for ( int i = 0; i < mips32_ops_count; i++ ) {
-		if ( mips32_op[i].check == BOTH || mips32_op[i].check == LAST )
-			if ( mips32_op[i].special == last && mips32_op[i].o == o ) return i;
+		if ( operate == 0 && mips32_op[i].o == o && mips32_op[i].special == last ) return INDEX_MIPS_INS_NOP;
+		if ( mips32_op[i].check == BOTH || mips32_op[i].check == LAST ) {
+			if ( mips32_op[i].special == last && mips32_op[i].o == o && operate != 0 && strncmp ( mips32_op[i].special_cmd, "nop", 4 ) ) {
+				return i;
+			}
+		}
 	}
 	return -1;
 }
@@ -1136,6 +1140,21 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 		case 20: {
 			 }
 			 break;
+		case 21: {
+				unsigned int rt = get_info_op ( op, 16, 20 );
+				unsigned int rd = get_info_op ( op, 11, 15 );
+				unsigned int sa = get_info_op ( op, 6, 10 );
+
+				if ( dialog == PRINT )
+				printf ( "%s %s, %s, %s", colored_string ( mips32_op[index].special_cmd, COLOR_OPERATE, 1 ),
+						colored_string ( get_name_register ( rd ), COLOR_REGISTER, 2 ),
+						colored_string ( get_name_register ( rt ), COLOR_REGISTER, 3 ),
+						colored_num ( sa, COLOR_NUMBER, 4 ) );
+
+				if ( dialog == PRINT )
+				printf ( "\n" );
+
+			 }
 	}
 }
 
@@ -1172,14 +1191,14 @@ static void parse_operation ( const int op, const unsigned int pointer, int dial
 	switch ( first ) {
 		case MIPS_REGIMM_CUSTOM: {
 						 unsigned short operate = get_info_op ( op, 16, 20 );
-						 int index = get_index_op_last ( operate, MIPS_REGIMM_CUSTOM );
+						 int index = get_index_op_last ( operate, MIPS_REGIMM_CUSTOM, op );
 						 if ( index == -1 ) {
 						 }
 						 scheme ( index, op, pointer, dialog, NO_CONDITION );
 					 }
 					 break;
 		case MIPS_SPECIAL_CUSTOM: {
-						  int index = get_index_op_last ( last, MIPS_SPECIAL_CUSTOM );
+						  int index = get_index_op_last ( last, MIPS_SPECIAL_CUSTOM, op );
 						  if ( index == -1 ) {
 						  }
 						  scheme ( index, op, pointer, dialog, NO_CONDITION );
@@ -1474,7 +1493,6 @@ static void get_gp_offset ( ) {
 	}
 
 	switch_gp_offset = 0;
-	printf ( "-->%x\n", cpuc.r[MIPS_REG_GP_CUSTOM] );
 }
 
 static int exec_pfaf_num ( unsigned int num ) {

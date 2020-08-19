@@ -140,6 +140,14 @@
  * 	25    co == 1
  * 	24-0  cofun
  * 
+ * 21.
+ * 	31-26 special
+ * 	25-21 zero
+ * 	20-16 rt
+ * 	15-11 rd
+ * 	10-6  sa
+ * 	5-0   operate
+ *
  */
 #include "mips32_registers.h"
 
@@ -472,6 +480,8 @@ const int fmt_count = sizeof ( fmt_struct ) / sizeof ( struct fmt );
 
 int both_count = sizeof ( both ) / sizeof ( int );
 
+#define INDEX_MIPS_INS_NOP       12
+
 struct mips32_operators {
 	unsigned int o;
 	unsigned int special;
@@ -516,8 +526,8 @@ struct mips32_operators {
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZAL_CUSTOM, "bltzal", mips32_operate_bltzal, 2, 11, BOTH },
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZALL_CUSTOM, "bltzall", mips32_operate_bltzall, 2, 11, BOTH },
 	{ MIPS_REGIMM_CUSTOM, MIPS_INS_BLTZL_CUSTOM, "bltzl", mips32_operate_bltzl, 2, 11, BOTH },
-	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNE_CUSTOM, "bne", mips32_operate_bne, 3, 7, BOTH },
-	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNEL_CUSTOM, "bnel", mips32_operate_bnel, 3, 7, BOTH },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNE_CUSTOM, "bne", mips32_operate_bne, 3, 7, FIRST },
+	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_BNEL_CUSTOM, "bnel", mips32_operate_bnel, 3, 7, FIRST },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_BREAK_CUSTOM, "break", mips32_operate_break, 0, 14, BOTH },
 	{ MIPS_COP1_CUSTOM, MIPS_INS_CONDITION_CUSTOM, "c", mips32_operate_c_cond, 2, 15, ONLY_COP1 },
 	{ MIPS_NONE_SPECIAL_CUSTOM, MIPS_INS_CACHE_CUSTOM, "cache", mips32_operate_cache, 3, 16, FIRST },
@@ -527,7 +537,8 @@ struct mips32_operators {
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_CLO_CUSTOM, "clo", mips32_operate_clo, 2, 2, BOTH },
 	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_CLZ_CUSTOM, "clz", mips32_operate_clz, 2, 2, BOTH },
 	{ MIPS_COP2_CUSTOM, MIPS_COP2_CO_CUSTOM, "cop2", mips32_operate_cop2, 1, 20, FIRST },
-	{ MIPS_COP1_CUSTOM, MIPS_INS_CTC1_CUSTOM, "ctc1", mips32_operate_ctc1, 2, 18, SECOND }
+	{ MIPS_COP1_CUSTOM, MIPS_INS_CTC1_CUSTOM, "ctc1", mips32_operate_ctc1, 2, 18, SECOND },
+	{ MIPS_SPECIAL_CUSTOM, MIPS_INS_SLL_CUSTOM, "sll", mips32_operate_sll, 3, 21, BOTH }
 };
 
 int mips32_ops_count = sizeof ( mips32_op ) / sizeof ( struct mips32_operators );
