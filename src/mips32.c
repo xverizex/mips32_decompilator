@@ -281,7 +281,8 @@ void mips32_cop1_operate_bc ( struct mips32_registers *mr, short static_number, 
 }
 
 void mips32_operate_addiu ( struct mips32_registers *mr, short static_number, int sec_num ) {
-	if ( switch_gp_offset && mr->rs == MIPS_REG_GP_CUSTOM ) {
+	if ( !switch_gp_offset && mr->rs == MIPS_REG_GP_CUSTOM && mr->rt == MIPS_REG_GP_CUSTOM ) return;
+	if ( switch_gp_offset && mr->rs == MIPS_REG_GP_CUSTOM && mr->rt == MIPS_REG_GP_CUSTOM ) {
 		cpuc.r[mr->rt] = cpuc.r[mr->rs] + static_number;
 		stage_gp++;
 		if ( stage_gp >= 2 ) switch_gp_offset = 0;
@@ -358,6 +359,7 @@ void mips32_operate_lw ( struct mips32_registers *mr, short static_number, int s
 	for ( int i = 0; i < sect.count - 1; i++ ) {
 		if ( sect.offset[i].vaddr >= cpuc.r[mr->rt] && sect.offset[i+1].vaddr <= cpuc.r[mr->rt] ) {
 			p |= sect.offset[i].addr & 0xffff0000;
+			break;
 		}
 	}
 
@@ -884,7 +886,7 @@ static void scheme ( const int index, const int op, const unsigned int pointer, 
 
 				mr.rs = rs;
 				mr.rt = rt;
-				mips32_op[index].operate ( &mr, immediate < 0x8000 ? immediate : (short) immediate, 0 );
+				mips32_op[index].operate ( &mr, immediate < 0x8000 ? immediate : (short) immediate & 0xffff, 0 );
 
 				if ( dialog == PRINT )
 				printf ( "\n" );
