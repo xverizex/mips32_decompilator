@@ -763,8 +763,9 @@ static int get_index_op_first ( const int first ) {
 }
 
 static int get_index_op_last ( const int last, unsigned int o, unsigned int operate ) {
+	if ( operate == 0 ) return INDEX_MIPS_INS_NOP;
 	for ( int i = 0; i < mips32_ops_count; i++ ) {
-		if ( operate == 0 && mips32_op[i].o == o && mips32_op[i].special == last ) return INDEX_MIPS_INS_NOP;
+		//if ( operate == 0 && mips32_op[i].o == o && mips32_op[i].special == last ) return INDEX_MIPS_INS_NOP;
 		if ( mips32_op[i].check == BOTH || mips32_op[i].check == LAST ) {
 			if ( mips32_op[i].special == last && mips32_op[i].o == o && operate != 0 && strncmp ( mips32_op[i].special_cmd, "nop", 4 ) ) {
 				return i;
