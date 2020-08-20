@@ -303,6 +303,7 @@ void mips32_operate_xori ( struct mips32_registers *mr, short static_number, int
 #define ONLY_COP1    3
 #define SECOND       4
 
+#define MIPS_INS_INVALID              0xffff
 #define MIPS_NONE_SPECIAL_CUSTOM      0xfffff
 #define MIPS_SPECIAL_CUSTOM           0x0
 #define MIPS_SPECIAL_2_CUSTOM         0x1b

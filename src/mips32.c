@@ -1,6 +1,5 @@
 #include "mips32.h"
 #include "values.h"
-#include <capstone/mips.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -136,7 +135,7 @@ static void print_pff ( const unsigned int pp, unsigned int offset, unsigned int
 			return;
 		}
 	}
-	if ( rt == MIPS_REG_T9_CUSTOM ) {
+	if ( rt == MIPS_REG_T9_CUSTOM || rt == -1 ) {
 		char buf[255];
 		snprintf ( buf, 255, "func.0x%x", pp );
 		printf ( "%s: %s\n", colored_num ( global_pointer, COLOR_ADDRESS, 1 ),
@@ -161,11 +160,11 @@ static void print_comment_function ( const unsigned int pp, unsigned int offset 
 			unsigned int off = ( sect.offset[i].addr & 0xffff0000 ) | ( pp & 0xffff );
 			const char *str = ( global_file_buffer + off );
 			if ( str[0] > 0 ) {
-				printf ( "; %s", str );
+				printf ( "; str: %s; ", str );
 				printf ( "func.%x", pp );
 			} else {
 				const int *n = (const int *) str;
-				printf ( "; int=%d ;", *n );
+				printf ( "; int=%d ; ", *n );
 				printf ( "func.%x", pp );
 			}
 			return;
@@ -462,6 +461,21 @@ void mips32_operate_jal ( struct mips32_registers *mr, short static_number, int 
 		if ( global_find_offset == sec_num ) {
 			printf ( "%s\n", colored_num ( global_pointer, COLOR_ADDRESS, 1 ) );
 		}
+	}
+
+	unsigned int p = sec_num & 0xffff;
+
+	for ( int i = 0; i < sect.count - 1; i++ ) {
+		if ( sect.offset[i].vaddr >= sec_num && sect.offset[i+1].vaddr <= sec_num ) {
+			p |= sect.offset[i].addr & 0xffff0000;
+			break;
+		}
+	}
+
+	unsigned int pp = sec_num; 
+	unsigned int offset_to_address = xchange ( get_address_offset ( p ) );
+	if ( switch_pff ) {
+		print_pff ( pp, offset_to_address, -1 );
 	}
 }
 
